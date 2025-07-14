@@ -71,7 +71,7 @@ def generate_pdf(summary, contracts):
         pdf.ln(8)
 
     buffer = BytesIO()
-    pdf.output(buffer)
+    pdf.output(buffer, dest='F')
     buffer.seek(0)
     return buffer
 
