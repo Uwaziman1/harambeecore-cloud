@@ -1,3 +1,5 @@
+# run_pipeline.py
+
 import logging
 import pandas as pd
 
@@ -6,12 +8,14 @@ from core.milestone_simulator import simulate_milestones
 from core.generate_contracts import generate_contracts
 from core.create_alerts import create_alerts
 from core.generate_payment_batch import generate_payment_batch
+from core.alert_log import generate_alert_log
+from core.summary_engine import summarize_project
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def run_pipeline() -> pd.DataFrame:
+def run_pipeline() -> dict:
     """Run Build The Bridge simulation pipeline."""
-    logging.info("\U0001F680 Build The Bridge Simulation Starting...")
+    logging.info("🚀 Build The Bridge Simulation Starting...")
 
     try:
         logging.info("Reading XAUUSD data from gap/XAUUSD_historical.csv...")
@@ -24,8 +28,9 @@ def run_pipeline() -> pd.DataFrame:
 
         contracts = generate_contracts(milestone_log)
         gaps = analyze_gaps(milestone_log)
-        create_alerts(contracts)
-        generate_payment_batch(contracts)
+        alerts = generate_alert_log(contracts)
+        payments = generate_payment_batch(contracts)
+        summary = summarize_project(milestone_log, contracts)
 
         gap_contexts = [
             "None",
@@ -36,11 +41,18 @@ def run_pipeline() -> pd.DataFrame:
         ]
         contracts["Gap Context"] = gap_contexts[:len(contracts)]
 
-        return contracts
+        return {
+            "milestones": milestone_log,
+            "contracts": contracts,
+            "gaps": gaps,
+            "alerts": alerts,
+            "payments": payments,
+            "summary": summary
+        }
 
     except Exception as e:
         logging.exception(f"Pipeline failed due to: {e}")
-        return pd.DataFrame()
+        return {}
 
 if __name__ == "__main__":
     run_pipeline()
