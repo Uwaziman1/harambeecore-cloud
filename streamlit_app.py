@@ -8,17 +8,17 @@ st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 PRIMARY = "#006600"   # Green
 SECONDARY = "#FF0000" # Red
 ACCENT = "#000000"     # Black
-BG = "#FFFFFF"         # White
 
 st.markdown(f"""
     <style>
-        .block-container {{
-            padding: 2rem;
-            background-color: {BG};
+        html, body, [class*="css"]  {{
+            color: {ACCENT};
+            background-color: #FFFFFF;
         }}
         .title-text {{
             color: {PRIMARY};
-            font-weight: 700;
+            font-size: 2rem;
+            font-weight: bold;
         }}
         .caption-text {{
             color: {SECONDARY};
