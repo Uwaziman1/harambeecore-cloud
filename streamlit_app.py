@@ -56,19 +56,19 @@ def generate_pdf(summary, contracts):
     pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
     pdf.ln(8)
     for _, row in contracts.iterrows():
-        pdf.cell(col_width, 8, str(row.get('Milestone', 'N/A')), border=1)
-        pdf.cell(col_width, 8, str(row.get('Price', 'N/A')), border=1)
-        pdf.cell(col_width, 8, str(row.get('Gap Context', 'N/A')), border=1)
+        milestone = str(row.get('Milestone', 'N/A'))
+        price = str(row.get('Price', 'N/A'))
+        context = str(row.get('Gap Context', 'N/A'))
+        pdf.cell(col_width, 8, milestone, border=1)
+        pdf.cell(col_width, 8, price, border=1)
+        pdf.cell(col_width, 8, context, border=1)
         pdf.ln(8)
 
-    buffer = BytesIO()
-   pdf_data = pdf.output(dest="S").encode("latin-1", errors="replace")
-buffer = BytesIO(pdf_data)
-buffer.seek(0)
-return buffer
-
+    pdf_data = pdf.output(dest="S").encode("latin-1", errors="replace")
+    buffer = BytesIO(pdf_data)
     buffer.seek(0)
     return buffer
+
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
