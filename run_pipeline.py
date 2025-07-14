@@ -28,6 +28,7 @@ def run_pipeline() -> dict:
         alerts = create_alerts(contracts)
         payments = generate_payment_batch(contracts)
 
+        # Attach textual gap contexts (you can extend logic as needed)
         gap_contexts = [
             "None",
             "Pre‑Crisis Boom + Commodities Rise",
@@ -37,6 +38,7 @@ def run_pipeline() -> dict:
         ]
         contracts["Gap Context"] = gap_contexts[:len(contracts)]
 
+        # Build a summary
         summary = {
             "Start Date": milestone_log["Date"].min(),
             "End Date": milestone_log["Date"].max(),
