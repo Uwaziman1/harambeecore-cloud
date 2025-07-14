@@ -9,9 +9,9 @@ from fpdf import FPDF
 
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 
-PRIMARY = "#006600"   # Green
-SECONDARY = "#FF0000" # Red
-ACCENT = "#000000"     # Black
+PRIMARY = "#006600"
+SECONDARY = "#FF0000"
+ACCENT = "#000000"
 
 st.markdown(f"""
     <style>
@@ -20,27 +20,10 @@ st.markdown(f"""
             background-color: #FFFFFF;
             font-family: 'Segoe UI', sans-serif;
         }}
-        h1, h2, h3 {{
-            color: {PRIMARY};
-        }}
-        .stTabs [role="tab"] {{
-            font-weight: bold;
-            font-size: 16px;
-            color: {PRIMARY};
-        }}
-        .stDownloadButton button {{
-            background-color: {PRIMARY};
-            color: white;
-        }}
-        .tag-chip {{
-            background-color: #eee;
-            color: #000;
-            font-size: 0.8rem;
-            padding: 3px 8px;
-            margin: 0 4px;
-            border-radius: 5px;
-            display: inline-block;
-        }}
+        h1, h2, h3 {{ color: {PRIMARY}; }}
+        .stTabs [role="tab"] {{ font-weight: bold; font-size: 16px; color: {PRIMARY}; }}
+        .stDownloadButton button {{ background-color: {PRIMARY}; color: white; }}
+        .tag-chip {{ background-color: #eee; color: #000; font-size: 0.8rem; padding: 3px 8px; margin: 0 4px; border-radius: 5px; display: inline-block; }}
         .status-ok {{ background-color: #28a745; color: white; }}
         .status-warn {{ background-color: #ffc107; color: black; }}
         .status-error {{ background-color: #dc3545; color: white; }}
@@ -48,19 +31,37 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 def generate_pdf(summary, contracts):
-    pdf = FPDF()
+    pdf = FPDF("P", "mm", "A4")
     pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="HarambeeCore Simulation Report", ln=True, align="C")
-    pdf.ln(10)
-    pdf.set_font("Arial", size=10)
-    pdf.cell(200, 10, txt="Summary:", ln=True)
-    for k, v in summary.items():
-        pdf.cell(200, 8, txt=f"{k}: {v}", ln=True)
+    pdf.set_font("Arial", 'B', 14)
+    pdf.set_text_color(0, 102, 0)
+    pdf.cell(0, 10, "HarambeeCore™ Simulation Report", ln=True, align="C")
     pdf.ln(5)
-    pdf.cell(200, 10, txt="Contracts:", ln=True)
-    for i, row in contracts.iterrows():
-        pdf.cell(200, 8, txt=f"{row['Milestone']} - {row['Price']} - {row['Gap Context']}", ln=True)
+
+    pdf.set_font("Arial", size=12)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 10, "Summary", ln=True)
+    pdf.set_font("Arial", size=10)
+    for k, v in summary.items():
+        pdf.cell(0, 8, f"{k}: {v}", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Arial", size=12)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(0, 10, "Contracts", ln=True)
+    pdf.set_font("Arial", size=10)
+    col_width = pdf.w / 4.5
+    pdf.set_fill_color(200, 220, 255)
+    pdf.cell(col_width, 8, "Milestone", border=1, fill=True)
+    pdf.cell(col_width, 8, "Price", border=1, fill=True)
+    pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
+    pdf.ln(8)
+    for _, row in contracts.iterrows():
+        pdf.cell(col_width, 8, str(row['Milestone']), border=1)
+        pdf.cell(col_width, 8, str(row['Price']), border=1)
+        pdf.cell(col_width, 8, str(row['Gap Context']), border=1)
+        pdf.ln(8)
+
     buffer = BytesIO()
     pdf.output(buffer)
     return buffer
@@ -75,7 +76,7 @@ if st.button("\U0001F680 Run Simulation"):
         result = run_pipeline()
 
     if isinstance(result, dict) and result.get("milestones") is not None:
-        tabs = st.tabs(["Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer"])
+        tabs = st.tabs(["Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
 
         with tabs[0]:
             st.header("\U0001F4CB Project Summary")
@@ -86,14 +87,13 @@ if st.button("\U0001F680 Run Simulation"):
             with col2:
                 for k, v in list(result["summary"].items())[3:]:
                     st.metric(label=k, value=str(v))
-            if st.button("Download PDF Report"):
-                buffer = generate_pdf(result["summary"], result["contracts"])
-                st.download_button(
-                    label="Click to Download PDF",
-                    data=buffer.getvalue(),
-                    file_name="harambeecore_report.pdf",
-                    mime="application/pdf"
-                )
+            buffer = generate_pdf(result["summary"], result["contracts"])
+            st.download_button(
+                label="📄 Download PDF Report",
+                data=buffer.getvalue(),
+                file_name="harambeecore_report.pdf",
+                mime="application/pdf"
+            )
 
         with tabs[1]:
             st.header("🧱 Milestones")
@@ -166,7 +166,8 @@ if st.button("\U0001F680 Run Simulation"):
         except Exception as e:
             st.warning(f"Chart unavailable: {e}")
 
-        with st.expander("📣 Contact & Sponsorship"):
+        with tabs[7]:
+            st.header("📣 Contact & Sponsorship")
             st.markdown("""
                 If you'd like to support this project or request a custom deployment:
                 - 💬 **Email:** buildthebridge@harambeecore.org
