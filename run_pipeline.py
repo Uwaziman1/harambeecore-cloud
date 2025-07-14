@@ -27,6 +27,15 @@ def run_pipeline() -> pd.DataFrame:
         create_alerts(contracts)
         generate_payment_batch(contracts)
 
+        gap_contexts = [
+            "None",
+            "Pre-Crisis Boom + Commodities Rise",
+            "2008 Global Financial Crisis",
+            "Eurozone Crisis & Quantitative Easing",
+            "COVID-19, War in Ukraine, AI-led Hype"
+        ]
+        contracts["Gap Context"] = gap_contexts[:len(contracts)]
+
         return contracts
 
     except Exception as e:
