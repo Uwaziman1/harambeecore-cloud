@@ -62,7 +62,11 @@ def generate_pdf(summary, contracts):
         pdf.ln(8)
 
     buffer = BytesIO()
-    pdf.output(buffer)  # Use binary-safe output to buffer
+   pdf_data = pdf.output(dest="S").encode("latin-1", errors="replace")
+buffer = BytesIO(pdf_data)
+buffer.seek(0)
+return buffer
+
     buffer.seek(0)
     return buffer
 
