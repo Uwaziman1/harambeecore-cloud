@@ -31,7 +31,7 @@ st.caption("Audit-level transparency powered by immutable ledgers")
 
 if st.button("\U0001F680 Run Simulation"):
     result = run_pipeline()
-    if result:
+    if isinstance(result, dict) and result.get("milestones") is not None:
         tabs = st.tabs(["Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments"])
 
         with tabs[0]:
@@ -70,4 +70,4 @@ if st.button("\U0001F680 Run Simulation"):
             st.warning(f"Chart unavailable: {e}")
 
     else:
-        st.error("Simulation failed. Check logs or data file.")
+        st.warning("Simulation did not return results. Check for errors in the pipeline.")
