@@ -34,5 +34,5 @@ streamlit run streamlit_app.py
 ---
 
 **Author:** Uwaziman1  |  copyright ‘Harambeecore™ Bridge
-Simulation System’ RZ77191
+Simulation System’ (RZ77191)
 
