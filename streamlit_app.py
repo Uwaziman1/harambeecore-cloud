@@ -7,7 +7,6 @@ from run_pipeline import run_pipeline
 from fpdf import FPDF
 from io import BytesIO
 import os
-
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 
 PRIMARY = "#006600"
@@ -34,10 +33,10 @@ st.markdown(f"""
 from fpdf import FPDF
 from io import BytesIO
 
-def gdef generate_pdf(summary, contracts):
+def generate_pdf(summary, contracts):
     pdf = FPDF("P", "mm", "A4")
 
-    # Load DejaVuSans.ttf from local repo
+    # Load DejaVuSans from same directory as script
     font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
     pdf.add_font("DejaVu", "", font_path, uni=True)
     pdf.set_font("DejaVu", size=12)
@@ -63,9 +62,12 @@ def gdef generate_pdf(summary, contracts):
     pdf.ln(8)
 
     for _, row in contracts.iterrows():
-        pdf.cell(col_width, 8, str(row.get("Milestone", "N/A")), border=1)
-        pdf.cell(col_width, 8, str(row.get("Price", "N/A")), border=1)
-        pdf.cell(col_width, 8, str(row.get("Gap Context", "N/A")), border=1)
+        milestone = str(row.get("Milestone", "N/A"))
+        price = str(row.get("Price", "N/A"))
+        context = str(row.get("Gap Context", "N/A"))
+        pdf.cell(col_width, 8, milestone, border=1)
+        pdf.cell(col_width, 8, price, border=1)
+        pdf.cell(col_width, 8, context, border=1)
         pdf.ln(8)
 
     buffer = BytesIO()
