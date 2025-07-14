@@ -33,10 +33,15 @@ st.markdown(f"""
 from fpdf import FPDF
 from io import BytesIO
 
-def generate_pdf(summary, contracts):
+from fpdf import FPDF
+from io import BytesIO
+import os
+import pandas as pd
+
+def generate_pdf(summary: dict, contracts: pd.DataFrame) -> BytesIO:
     pdf = FPDF("P", "mm", "A4")
 
-    # Load DejaVuSans from same directory as script
+    # Load Unicode-safe font
     font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
     pdf.add_font("DejaVu", "", font_path, uni=True)
     pdf.set_font("DejaVu", size=12)
@@ -46,29 +51,34 @@ def generate_pdf(summary, contracts):
     pdf.cell(0, 10, "HarambeeCore™ Simulation Report", ln=True, align="C")
     pdf.ln(5)
 
+    # Summary section
     pdf.set_text_color(0, 0, 0)
     pdf.set_font("DejaVu", size=10)
     pdf.cell(0, 10, "Summary", ln=True)
     for k, v in summary.items():
         pdf.cell(0, 8, f"{k}: {v}", ln=True)
 
+    # Contracts section
     pdf.ln(5)
     pdf.cell(0, 10, "Contracts", ln=True)
-    col_width = pdf.w / 4.5
     pdf.set_fill_color(200, 220, 255)
+    col_width = pdf.w / 4.5
     pdf.cell(col_width, 8, "Milestone", border=1, fill=True)
     pdf.cell(col_width, 8, "Price", border=1, fill=True)
     pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
     pdf.ln(8)
 
-    for _, row in contracts.iterrows():
-        milestone = str(row.get("Milestone", "N/A"))
-        price = str(row.get("Price", "N/A"))
-        context = str(row.get("Gap Context", "N/A"))
-        pdf.cell(col_width, 8, milestone, border=1)
-        pdf.cell(col_width, 8, price, border=1)
-        pdf.cell(col_width, 8, context, border=1)
-        pdf.ln(8)
+    if contracts is not None and not contracts.empty:
+        for _, row in contracts.iterrows():
+            milestone = str(row.get("Milestone", "N/A"))
+            price = str(row.get("Price", "N/A"))
+            context = str(row.get("Gap Context", "N/A"))
+            pdf.cell(col_width, 8, milestone, border=1)
+            pdf.cell(col_width, 8, price, border=1)
+            pdf.cell(col_width, 8, context, border=1)
+            pdf.ln(8)
+    else:
+        pdf.cell(0, 8, "No contract data available.", ln=True)
 
     pdf_data = pdf.output(dest="S").encode("latin-1", errors="replace")
     buffer = BytesIO(pdf_data)
