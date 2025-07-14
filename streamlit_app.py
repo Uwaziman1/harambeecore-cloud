@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import openai
 import os
 from run_pipeline import run_pipeline
-from io import BytesIO
 from fpdf import FPDF
+from io import BytesIO
+import os
 
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 
@@ -33,42 +34,45 @@ st.markdown(f"""
 from fpdf import FPDF
 from io import BytesIO
 
-def generate_pdf(summary, contracts):
+def gdef generate_pdf(summary, contracts):
     pdf = FPDF("P", "mm", "A4")
-    pdf.add_font("FreeSans", "", "FreeSans.ttf", uni=True)
-    pdf.set_font("FreeSans", '', 14)
+
+    # Load DejaVuSans.ttf from local repo
+    font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
+    pdf.add_font("DejaVu", "", font_path, uni=True)
+    pdf.set_font("DejaVu", size=12)
+
     pdf.add_page()
     pdf.set_text_color(0, 102, 0)
     pdf.cell(0, 10, "HarambeeCore™ Simulation Report", ln=True, align="C")
     pdf.ln(5)
 
     pdf.set_text_color(0, 0, 0)
-    pdf.set_font("FreeSans", '', 12)
+    pdf.set_font("DejaVu", size=10)
     pdf.cell(0, 10, "Summary", ln=True)
-    pdf.set_font("FreeSans", '', 10)
     for k, v in summary.items():
         pdf.cell(0, 8, f"{k}: {v}", ln=True)
 
     pdf.ln(5)
-    pdf.set_font("FreeSans", '', 12)
     pdf.cell(0, 10, "Contracts", ln=True)
-    pdf.set_font("FreeSans", '', 10)
     col_width = pdf.w / 4.5
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(col_width, 8, "Milestone", border=1, fill=True)
     pdf.cell(col_width, 8, "Price", border=1, fill=True)
     pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
     pdf.ln(8)
+
     for _, row in contracts.iterrows():
-        pdf.cell(col_width, 8, str(row.get('Milestone', 'N/A')), border=1)
-        pdf.cell(col_width, 8, str(row.get('Price', 'N/A')), border=1)
-        pdf.cell(col_width, 8, str(row.get('Gap Context', 'N/A')), border=1)
+        pdf.cell(col_width, 8, str(row.get("Milestone", "N/A")), border=1)
+        pdf.cell(col_width, 8, str(row.get("Price", "N/A")), border=1)
+        pdf.cell(col_width, 8, str(row.get("Gap Context", "N/A")), border=1)
         pdf.ln(8)
 
     buffer = BytesIO()
     pdf.output(buffer)
     buffer.seek(0)
     return buffer
+
 
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
