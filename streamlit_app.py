@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import openai
 import os
 from run_pipeline import run_pipeline
+from io import BytesIO
+from fpdf import FPDF
 
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 
@@ -30,8 +32,38 @@ st.markdown(f"""
             background-color: {PRIMARY};
             color: white;
         }}
+        .tag-chip {{
+            background-color: #eee;
+            color: #000;
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            margin: 0 4px;
+            border-radius: 5px;
+            display: inline-block;
+        }}
+        .status-ok {{ background-color: #28a745; color: white; }}
+        .status-warn {{ background-color: #ffc107; color: black; }}
+        .status-error {{ background-color: #dc3545; color: white; }}
     </style>
 """, unsafe_allow_html=True)
+
+def generate_pdf(summary, contracts):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="HarambeeCore Simulation Report", ln=True, align="C")
+    pdf.ln(10)
+    pdf.set_font("Arial", size=10)
+    pdf.cell(200, 10, txt="Summary:", ln=True)
+    for k, v in summary.items():
+        pdf.cell(200, 8, txt=f"{k}: {v}", ln=True)
+    pdf.ln(5)
+    pdf.cell(200, 10, txt="Contracts:", ln=True)
+    for i, row in contracts.iterrows():
+        pdf.cell(200, 8, txt=f"{row['Milestone']} - {row['Price']} - {row['Gap Context']}", ln=True)
+    buffer = BytesIO()
+    pdf.output(buffer)
+    return buffer
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -54,6 +86,14 @@ if st.button("\U0001F680 Run Simulation"):
             with col2:
                 for k, v in list(result["summary"].items())[3:]:
                     st.metric(label=k, value=str(v))
+            if st.button("Download PDF Report"):
+                buffer = generate_pdf(result["summary"], result["contracts"])
+                st.download_button(
+                    label="Click to Download PDF",
+                    data=buffer.getvalue(),
+                    file_name="harambeecore_report.pdf",
+                    mime="application/pdf"
+                )
 
         with tabs[1]:
             st.header("🧱 Milestones")
@@ -63,7 +103,7 @@ if st.button("\U0001F680 Run Simulation"):
                 milestone_df = milestone_df[milestone_df["Milestone"].isin(milestone_filter)]
             st.dataframe(milestone_df, use_container_width=True)
             st.download_button("Download Milestones", milestone_df.to_csv(index=False), file_name="milestones.csv")
-            st.line_chart(milestone_df.set_index("Date")["Price"])
+            st.line_chart(milestone_df.set_index("Date")["Price"], use_container_width=True)
 
         with tabs[2]:
             st.header("📜 Contract Validations")
@@ -73,7 +113,7 @@ if st.button("\U0001F680 Run Simulation"):
                 contract_df = contract_df[contract_df["Gap Context"].isin(contract_filter)]
             st.dataframe(contract_df, use_container_width=True)
             st.download_button("Download Contracts", contract_df.to_csv(index=False), file_name="contracts.csv")
-            st.bar_chart(contract_df["Price"])
+            st.bar_chart(contract_df.set_index(contract_df.columns[0])["Price"], use_container_width=True)
 
         with tabs[3]:
             st.header("⚠️ Gap Analysis")
@@ -83,7 +123,7 @@ if st.button("\U0001F680 Run Simulation"):
             gap_df = gap_df[(gap_df["Gap"] >= selected_range[0]) & (gap_df["Gap"] <= selected_range[1])]
             st.dataframe(gap_df, use_container_width=True)
             st.download_button("Download Gaps", gap_df.to_csv(index=False), file_name="gap_analysis.csv")
-            st.line_chart(gap_df.set_index("Date")["Gap"])
+            st.line_chart(gap_df.set_index("Date")["Gap"], use_container_width=True)
 
         with tabs[4]:
             st.header("\U0001F514 Alert Log")
@@ -97,7 +137,7 @@ if st.button("\U0001F680 Run Simulation"):
             payment_df = payment_df[payment_df["Recipient"] == recipient_filter]
             st.dataframe(payment_df, use_container_width=True)
             st.download_button("Download Payments", payment_df.to_csv(index=False), file_name="payment_batch.csv")
-            st.bar_chart(payment_df.set_index("Date")["Amount"])
+            st.bar_chart(payment_df.set_index("Date")["Amount"], use_container_width=True)
 
         with tabs[6]:
             st.header("\U0001F916 GPT Explorer")
@@ -125,6 +165,14 @@ if st.button("\U0001F680 Run Simulation"):
             st.image("gap/milestone_plot.png", caption="Kilimani Bridge Construction Timeline (Gold-Pegged)")
         except Exception as e:
             st.warning(f"Chart unavailable: {e}")
+
+        with st.expander("📣 Contact & Sponsorship"):
+            st.markdown("""
+                If you'd like to support this project or request a custom deployment:
+                - 💬 **Email:** buildthebridge@harambeecore.org
+                - 💼 **Sponsor link:** [github.com/sponsors/uwaziman1](https://github.com/sponsors/uwaziman1)
+                - 🧠 Powered by HarambeeCore™ RZ77191
+            """)
 
     else:
         st.warning("Simulation did not return results. Check for errors in the pipeline.")
