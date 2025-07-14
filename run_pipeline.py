@@ -14,18 +14,23 @@ def run_pipeline() -> pd.DataFrame:
     logging.info("\U0001F680 Build The Bridge Simulation Starting...")
 
     try:
+        logging.info("Reading XAUUSD data from gap/XAUUSD_historical.csv...")
         df = pd.read_csv("gap/XAUUSD_historical.csv", sep=';')
         df['Date'] = pd.to_datetime(df['Date'], format='%Y.%m.%d %H:%M')
+        logging.info(f"Loaded {len(df)} rows of data")
 
         milestone_log = simulate_milestones(df)
+        logging.info(f"Milestones found: {len(milestone_log)}")
+
         contracts = generate_contracts(milestone_log)
         gaps = analyze_gaps(milestone_log)
         create_alerts(contracts)
         generate_payment_batch(contracts)
+
         return contracts
 
     except Exception as e:
-        logging.error(f"Pipeline failed: {e}")
+        logging.exception(f"Pipeline failed due to: {e}")
         return pd.DataFrame()
 
 if __name__ == "__main__":
