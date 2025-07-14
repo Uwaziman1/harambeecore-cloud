@@ -30,25 +30,29 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
+from fpdf import FPDF
+from io import BytesIO
+
 def generate_pdf(summary, contracts):
     pdf = FPDF("P", "mm", "A4")
+    pdf.add_font("FreeSans", "", "FreeSans.ttf", uni=True)
+    pdf.set_font("FreeSans", '', 14)
     pdf.add_page()
-    pdf.set_font("Arial", 'B', 14)
     pdf.set_text_color(0, 102, 0)
     pdf.cell(0, 10, "HarambeeCore™ Simulation Report", ln=True, align="C")
     pdf.ln(5)
 
-    pdf.set_font("Arial", size=12)
     pdf.set_text_color(0, 0, 0)
+    pdf.set_font("FreeSans", '', 12)
     pdf.cell(0, 10, "Summary", ln=True)
-    pdf.set_font("Arial", size=10)
+    pdf.set_font("FreeSans", '', 10)
     for k, v in summary.items():
         pdf.cell(0, 8, f"{k}: {v}", ln=True)
 
     pdf.ln(5)
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("FreeSans", '', 12)
     pdf.cell(0, 10, "Contracts", ln=True)
-    pdf.set_font("Arial", size=10)
+    pdf.set_font("FreeSans", '', 10)
     col_width = pdf.w / 4.5
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(col_width, 8, "Milestone", border=1, fill=True)
@@ -56,16 +60,13 @@ def generate_pdf(summary, contracts):
     pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
     pdf.ln(8)
     for _, row in contracts.iterrows():
-        milestone = str(row.get('Milestone', 'N/A'))
-        price = str(row.get('Price', 'N/A'))
-        context = str(row.get('Gap Context', 'N/A'))
-        pdf.cell(col_width, 8, milestone, border=1)
-        pdf.cell(col_width, 8, price, border=1)
-        pdf.cell(col_width, 8, context, border=1)
+        pdf.cell(col_width, 8, str(row.get('Milestone', 'N/A')), border=1)
+        pdf.cell(col_width, 8, str(row.get('Price', 'N/A')), border=1)
+        pdf.cell(col_width, 8, str(row.get('Gap Context', 'N/A')), border=1)
         pdf.ln(8)
 
-    pdf_data = pdf.output(dest="S").encode("latin-1", errors="replace")
-    buffer = BytesIO(pdf_data)
+    buffer = BytesIO()
+    pdf.output(buffer)
     buffer.seek(0)
     return buffer
 
