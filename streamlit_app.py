@@ -50,10 +50,10 @@ if st.button("\U0001F680 Run Simulation"):
             col1, col2 = st.columns(2)
             with col1:
                 for k, v in list(result["summary"].items())[:3]:
-                    st.metric(label=k, value=v)
+                    st.metric(label=k, value=str(v))
             with col2:
                 for k, v in list(result["summary"].items())[3:]:
-                    st.metric(label=k, value=v)
+                    st.metric(label=k, value=str(v))
 
         with tabs[1]:
             st.header("🧱 Milestones")
