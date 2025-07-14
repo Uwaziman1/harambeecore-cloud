@@ -70,8 +70,8 @@ def generate_pdf(summary, contracts):
         pdf.cell(col_width, 8, context, border=1)
         pdf.ln(8)
 
-    buffer = BytesIO()
-    pdf.output(buffer, dest='F')
+    pdf_data = pdf.output(dest="S").encode("latin-1", errors="replace")
+    buffer = BytesIO(pdf_data)
     buffer.seek(0)
     return buffer
 
