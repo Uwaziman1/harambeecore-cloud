@@ -47,7 +47,6 @@ def generate_pdf(summary, contracts):
 
     pdf.ln(5)
     pdf.set_font("Arial", size=12)
-    pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 10, "Contracts", ln=True)
     pdf.set_font("Arial", size=10)
     col_width = pdf.w / 4.5
@@ -57,16 +56,13 @@ def generate_pdf(summary, contracts):
     pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
     pdf.ln(8)
     for _, row in contracts.iterrows():
-        milestone = str(row.get('Milestone', 'N/A'))
-        price = str(row.get('Price', 'N/A'))
-        context = str(row.get('Gap Context', 'N/A'))
-        pdf.cell(col_width, 8, milestone, border=1)
-        pdf.cell(col_width, 8, price, border=1)
-        pdf.cell(col_width, 8, context, border=1)
+        pdf.cell(col_width, 8, str(row.get('Milestone', 'N/A')), border=1)
+        pdf.cell(col_width, 8, str(row.get('Price', 'N/A')), border=1)
+        pdf.cell(col_width, 8, str(row.get('Gap Context', 'N/A')), border=1)
         pdf.ln(8)
 
     buffer = BytesIO()
-    buffer.write(pdf.output(dest="S").encode("latin-1"))
+    pdf.output(buffer)  # Use binary-safe output to buffer
     buffer.seek(0)
     return buffer
 
