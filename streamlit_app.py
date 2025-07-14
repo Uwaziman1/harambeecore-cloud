@@ -69,4 +69,3 @@ def generate_pdf(summary, contracts):
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Remaining app logic continues unchanged...
