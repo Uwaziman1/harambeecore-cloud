@@ -1,1 +1,6 @@
+.secrets.toml
+.env
+output/
+*.csv
+*.xlsx
 
