@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from run_pipeline import run_pipeline
 
 app = FastAPI()
 
@@ -8,12 +9,16 @@ def root():
 
 @app.get("/simulate")
 def simulate():
-    return {
-        "summary": {"Milestones": 10, "Contracts": 5},
-        "milestones": [{"Milestone": "Test", "Price": 1000}],
-        "contracts": [{"Milestone": "Test", "Price": 1000, "Gap Context": "Demo"}],
-        "gaps": [],
-        "alerts": [],
-        "payments": []
-    }
+    result = run_pipeline()
 
+    if not result:
+        return {"error": "Simulation failed or no data returned."}
+
+    return {
+        "summary": result.get("summary", {}),
+        "milestones": result.get("milestones", []),
+        "contracts": result.get("contracts", []),
+        "gaps": result.get("gaps", []),
+        "alerts": result.get("alerts", []),
+        "payments": result.get("payments", [])
+    }
