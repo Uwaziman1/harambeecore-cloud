@@ -181,7 +181,7 @@ if st.button("\U0001F680 Run Simulation"):
             st.header("📣 Contact & Sponsorship")
             st.markdown("""
                 If you'd like to support this project or request a custom deployment:
-                - 💬 **Email:** buildthebridge@harambeecore.org
+                - 💬 **Email:** mbuguawian@gmail.com
                 - 💼 **Sponsor link:** [github.com/sponsors/uwaziman1](https://github.com/sponsors/uwaziman1)
                 - 🧠 Powered by HarambeeCore™ RZ77191
             """)
