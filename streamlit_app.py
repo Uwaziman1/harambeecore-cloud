@@ -65,9 +65,13 @@ def generate_pdf(summary, contracts):
         pdf.cell(col_width, 8, context, border=1)
         pdf.ln(8)
 
-    pdf_bytes = pdf.output(dest="S").encode("latin-1", errors="ignore")
-buffer = BytesIO(pdf_bytes)
-    return buffer
+    try:
+        pdf_bytes = pdf.output(dest="S").encode("latin-1", errors="ignore")
+        buffer = BytesIO(pdf_bytes)
+        return buffer
+    except Exception as e:
+        print(f"PDF generation failed: {e}")
+        return BytesIO()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
