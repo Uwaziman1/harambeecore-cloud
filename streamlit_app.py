@@ -124,9 +124,10 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
 
         with tabs[3]:
             st.header("Contracts")
-            contracts = result["contracts"]
+            contracts = pd.DataFrame(result["contracts"])
             st.dataframe(contracts, use_container_width=True)
-            st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
+            if not contracts.empty and "Milestone" in contracts.columns and "Price" in contracts.columns:
+                st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
 
         with tabs[4]:
             st.header("Gaps")
