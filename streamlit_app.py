@@ -135,6 +135,11 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
 
         with tabs[5]:
             st.header("Alerts")
+            alerts = pd.DataFrame(result["alerts"])
+            st.dataframe(alerts, use_container_width=True)
+            if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
+                st.bar_chart(alerts.set_index("Date")["Alert"].astype(str).value_counts())
+
     alerts = result["alerts"]
     st.dataframe(alerts, use_container_width=True)
     if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
@@ -142,6 +147,11 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
 
         with tabs[6]:
             st.header("Payments")
+            payments = pd.DataFrame(result["payments"])
+            st.dataframe(payments, use_container_width=True)
+            if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
+                st.line_chart(payments.set_index("Date")["Amount"])
+
     payments = result["payments"]
     st.dataframe(payments, use_container_width=True)
     if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
