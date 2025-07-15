@@ -87,8 +87,8 @@ if st.button("\U0001F680 Run Simulation"):
 
         with tabs[0]:
             st.image("/mnt/data/DALL·E 2025-03-26 11.54.47 - A modern, professional logo for HarambeeCoin, combining Kenyan heritage with global reach and transparency. The logo should feature___1. __A stylized .webp", width=200)
-st.header("About HarambeeCore Dashboard")
-            st.markdown("""
+    st.header("About HarambeeCore Dashboard")
+                st.markdown("""
                 The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
 
                 Using historical XAUUSD (gold price) data from 2004, the system tracks price movements and triggers milestones whenever prices cross significant thresholds — every $100 and $1,000 mark. These milestones simulate public fund events (like disbursements, audits, or allocations).
