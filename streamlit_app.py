@@ -65,9 +65,8 @@ def generate_pdf(summary, contracts):
         pdf.cell(col_width, 8, context, border=1)
         pdf.ln(8)
 
-    buffer = BytesIO()
-    buffer.write(pdf.output(dest="S").encode("latin-1"))
-    buffer.seek(0)
+    pdf_bytes = pdf.output(dest="S").encode("latin-1", errors="ignore")
+buffer = BytesIO(pdf_bytes)
     return buffer
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
