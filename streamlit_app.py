@@ -7,12 +7,14 @@ import requests
 from io import BytesIO
 from fpdf import FPDF
 
+# Page Setup
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 
 PRIMARY = "#006600"
 SECONDARY = "#FF0000"
 ACCENT = "#000000"
 
+# Custom Styles
 st.markdown(f"""
     <style>
         html, body, [class*="css"]  {{
@@ -30,6 +32,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
+# PDF Export
 def generate_pdf(summary, contracts):
     pdf = FPDF("P", "mm", "A4")
     pdf.add_page()
@@ -47,7 +50,6 @@ def generate_pdf(summary, contracts):
 
     pdf.ln(5)
     pdf.set_font("Arial", size=12)
-    pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 10, "Contracts", ln=True)
     pdf.set_font("Arial", size=10)
     col_width = pdf.w / 4.5
@@ -58,12 +60,9 @@ def generate_pdf(summary, contracts):
     pdf.ln(8)
     contracts_df = pd.DataFrame(contracts)
     for _, row in contracts_df.iterrows():
-        milestone = str(row.get('Milestone', 'N/A'))
-        price = str(row.get('Price', 'N/A'))
-        context = str(row.get('Gap Context', 'N/A'))
-        pdf.cell(col_width, 8, milestone, border=1)
-        pdf.cell(col_width, 8, price, border=1)
-        pdf.cell(col_width, 8, context, border=1)
+        pdf.cell(col_width, 8, str(row.get("Milestone", "N/A")), border=1)
+        pdf.cell(col_width, 8, str(row.get("Price", "N/A")), border=1)
+        pdf.cell(col_width, 8, str(row.get("Gap Context", "N/A")), border=1)
         pdf.ln(8)
 
     try:
@@ -74,17 +73,27 @@ def generate_pdf(summary, contracts):
         print(f"PDF generation failed: {e}")
         return BytesIO()
 
+# API Key for GPT
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Title
 st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
 
+# Simulation Trigger
 if st.button("Run Simulation"):
     with st.spinner("Simulating bridge progress and contracts..."):
         response = requests.get("https://harambeecore-cloud.onrender.com/simulate")
         result = response.json() if response.status_code == 200 else {}
 
     if isinstance(result, dict) and result.get("milestones") is not None:
+        summary = result.get("summary", {})
+        milestones = pd.DataFrame(result.get("milestones", []))
+        contracts = pd.DataFrame(result.get("contracts", []))
+        gaps = pd.DataFrame(result.get("gaps", []))
+        alerts = pd.DataFrame(result.get("alerts", []))
+        payments = pd.DataFrame(result.get("payments", []))
+
         tabs = st.tabs(["About", "Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
 
         with tabs[0]:
@@ -105,60 +114,48 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
 
         with tabs[1]:
             st.header("Summary")
-            summary = result["summary"]
             col1, col2 = st.columns(2)
             for i, (k, v) in enumerate(summary.items()):
                 (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
-            buffer = generate_pdf(result["summary"], result["contracts"])
+            buffer = generate_pdf(summary, contracts)
             st.download_button("Download PDF Report", data=buffer.getvalue(), file_name="harambeecore_report.pdf", mime="application/pdf")
 
         with tabs[2]:
             st.header("Milestones")
-            df = pd.DataFrame(result["milestones"])
-            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
-            st.dataframe(df, use_container_width=True)
-            if not df.empty and "Date" in df.columns:
-                start_date, end_date = st.date_input("Filter by Date Range", [df["Date"].min(), df["Date"].max()])
-                filtered_df = df[(df["Date"] >= pd.to_datetime(start_date)) & (df["Date"] <= pd.to_datetime(end_date))]
+            if not milestones.empty:
+                milestones["Date"] = pd.to_datetime(milestones["Date"], errors="coerce")
+                st.dataframe(milestones, use_container_width=True)
+                start_date, end_date = st.date_input("Filter by Date Range", [milestones["Date"].min(), milestones["Date"].max()])
+                filtered_df = milestones[(milestones["Date"] >= pd.to_datetime(start_date)) & (milestones["Date"] <= pd.to_datetime(end_date))]
                 st.line_chart(filtered_df.set_index("Date")["Price"], use_container_width=True)
 
         with tabs[3]:
             st.header("Contracts")
-            contracts = pd.DataFrame(result["contracts"])
-            st.dataframe(contracts, use_container_width=True)
-            if isinstance(contracts, pd.DataFrame) and not contracts.empty and "Milestone" in contracts.columns and "Price" in contracts.columns:
-                st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
+            if not contracts.empty:
+                st.dataframe(contracts, use_container_width=True)
+                if "Milestone" in contracts.columns and "Price" in contracts.columns:
+                    st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
 
         with tabs[4]:
             st.header("Gaps")
-            gaps = pd.DataFrame(result["gaps"])
-            st.dataframe(gaps, use_container_width=True)
-            if not gaps.empty and "Date" in gaps.columns and "Gap" in gaps.columns:
-                st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
+            if not gaps.empty:
+                st.dataframe(gaps, use_container_width=True)
+                if "Date" in gaps.columns and "Gap" in gaps.columns:
+                    st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
 
         with tabs[5]:
             st.header("Alerts")
-            alerts = pd.DataFrame(result["alerts"])
-            st.dataframe(alerts, use_container_width=True)
-            if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
-                st.bar_chart(alerts.set_index("Date")["Alert"].astype(str).value_counts())
-
-    alerts = pd.DataFrame(result["alerts"])
-            st.dataframe(alerts, use_container_width=True)
-            if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
-        st.bar_chart(alerts.set_index("Date")["Alert"].astype(str).value_counts())
+            if not alerts.empty:
+                st.dataframe(alerts, use_container_width=True)
+                if "Date" in alerts.columns and "Message" in alerts.columns:
+                    st.bar_chart(alerts.set_index("Date")["Message"].astype(str).value_counts())
 
         with tabs[6]:
             st.header("Payments")
-            payments = pd.DataFrame(result["payments"])
-            st.dataframe(payments, use_container_width=True)
-            if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
-                st.line_chart(payments.set_index("Date")["Amount"])
-
-    payments = pd.DataFrame(result["payments"])
-            st.dataframe(payments, use_container_width=True)
-            if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
-        st.line_chart(payments.set_index("Date")["Amount"])
+            if not payments.empty:
+                st.dataframe(payments, use_container_width=True)
+                if "Date" in payments.columns and "Amount" in payments.columns:
+                    st.line_chart(payments.set_index("Date")["Amount"])
 
         with tabs[7]:
             st.header("GPT Explorer")
