@@ -101,29 +101,70 @@ This prototype showcases how automated, rule-based financial monitoring can repl
 HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem designed to rebuild trust in governance through accountability, automation, and people-first design.
 """)
 
-        else:
-        st.warning("Simulation did not return results. Check for errors in the pipeline.")
-
         with tabs[1]:
-            st.subheader("Summary tab will appear here once data is ready.")
+            st.header("Summary")
+            summary = result["summary"]
+            col1, col2 = st.columns(2)
+            for i, (k, v) in enumerate(summary.items()):
+                (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
+            buffer = generate_pdf(result["summary"], result["contracts"])
+            st.download_button("Download PDF Report", data=buffer.getvalue(), file_name="harambeecore_report.pdf", mime="application/pdf")
 
         with tabs[2]:
-            st.subheader("Milestones tab will appear here once data is ready.")
+            st.header("Milestones")
+            df = result["milestones"]
+            st.dataframe(df, use_container_width=True)
+            st.line_chart(df.set_index("Date")["Price"], use_container_width=True)
 
         with tabs[3]:
-            st.subheader("Contracts tab will appear here once data is ready.")
+            st.header("Contracts")
+            contracts = result["contracts"]
+            st.dataframe(contracts, use_container_width=True)
+            st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
 
         with tabs[4]:
-            st.subheader("Gap analysis tab will appear here once data is ready.")
+            st.header("Gaps")
+            gaps = result["gaps"]
+            st.dataframe(gaps, use_container_width=True)
+            if not gaps.empty:
+                st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
 
         with tabs[5]:
-            st.subheader("Alerts tab will appear here once data is ready.")
+            st.header("Alerts")
+            alerts = result["alerts"]
+            st.dataframe(alerts, use_container_width=True)
 
         with tabs[6]:
-            st.subheader("Payments tab will appear here once data is ready.")
+            st.header("Payments")
+            payments = result["payments"]
+            st.dataframe(payments, use_container_width=True)
 
         with tabs[7]:
-            st.subheader("GPT Explorer tab will appear here once data is ready.")
+            st.header("GPT Explorer")
+            prompt = st.text_area("Ask the GPT-powered analyst (e.g. What happened in 2008?)")
+            if prompt:
+                if openai.api_key:
+                    with st.spinner("Getting response from GPT..."):
+                        try:
+                            response = openai.ChatCompletion.create(
+                                model="gpt-3.5-turbo",
+                                messages=[
+                                    {"role": "system", "content": "You are a financial analyst helping users interpret historical market-linked events."},
+                                    {"role": "user", "content": prompt}
+                                ]
+                            )
+                            st.success(response["choices"][0]["message"]["content"])
+                        except Exception as e:
+                            st.error(f"Error: {e}")
+                else:
+                    st.warning("Missing OpenAI API key.")
 
         with tabs[8]:
-            st.subheader("Contact tab will appear here once data is ready.")
+            st.header("Contact")
+            st.markdown("""
+**Email:** mbuguawian@gmail.com  
+**Sponsor:** [GitHub Sponsors](https://github.com/sponsors/uwaziman1)  
+**Foundation:** HarambeeCore™ RZ77191
+""")
+    else:
+        st.warning("Simulation did not return results. Check for errors in the pipeline.")
