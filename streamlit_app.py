@@ -114,7 +114,9 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
             st.header("Milestones")
             df = result["milestones"]
             st.dataframe(df, use_container_width=True)
-            st.line_chart(df.set_index("Date")["Price"], use_container_width=True)
+            start_date, end_date = st.date_input("Filter by Date Range", [df["Date"].min(), df["Date"].max()])
+            filtered_df = df[(df["Date"] >= pd.to_datetime(start_date)) & (df["Date"] <= pd.to_datetime(end_date))]
+            st.line_chart(filtered_df.set_index("Date")["Price"], use_container_width=True)
 
         with tabs[3]:
             st.header("Contracts")
@@ -130,14 +132,18 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
                 st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
 
         with tabs[5]:
-            st.header("Alerts")
-            alerts = result["alerts"]
-            st.dataframe(alerts, use_container_width=True)
+    st.header("Alerts")
+    alerts = result["alerts"]
+    st.dataframe(alerts, use_container_width=True)
+    if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
+        st.bar_chart(alerts.set_index("Date")["Alert"].astype(str).value_counts())
 
         with tabs[6]:
-            st.header("Payments")
-            payments = result["payments"]
-            st.dataframe(payments, use_container_width=True)
+    st.header("Payments")
+    payments = result["payments"]
+    st.dataframe(payments, use_container_width=True)
+    if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
+        st.line_chart(payments.set_index("Date")["Amount"])
 
         with tabs[7]:
             st.header("GPT Explorer")
