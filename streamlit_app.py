@@ -56,7 +56,8 @@ def generate_pdf(summary, contracts):
     pdf.cell(col_width, 8, "Price", border=1, fill=True)
     pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
     pdf.ln(8)
-    for _, row in contracts.iterrows():
+    contracts_df = pd.DataFrame(contracts)
+    for _, row in contracts_df.iterrows()
         milestone = str(row.get('Milestone', 'N/A'))
         price = str(row.get('Price', 'N/A'))
         context = str(row.get('Gap Context', 'N/A'))
