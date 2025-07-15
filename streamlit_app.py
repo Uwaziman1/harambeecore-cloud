@@ -126,14 +126,14 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
             st.header("Contracts")
             contracts = pd.DataFrame(result["contracts"])
             st.dataframe(contracts, use_container_width=True)
-            if not contracts.empty and "Milestone" in contracts.columns and "Price" in contracts.columns:
+            if isinstance(contracts, pd.DataFrame) and not contracts.empty and "Milestone" in contracts.columns and "Price" in contracts.columns:
                 st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
 
         with tabs[4]:
             st.header("Gaps")
-            gaps = result["gaps"]
+            gaps = pd.DataFrame(result["gaps"])
             st.dataframe(gaps, use_container_width=True)
-            if not gaps.empty:
+            if not gaps.empty and "Date" in gaps.columns and "Gap" in gaps.columns:
                 st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
 
         with tabs[5]:
@@ -143,9 +143,9 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
             if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
                 st.bar_chart(alerts.set_index("Date")["Alert"].astype(str).value_counts())
 
-    alerts = result["alerts"]
-    st.dataframe(alerts, use_container_width=True)
-    if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
+    alerts = pd.DataFrame(result["alerts"])
+            st.dataframe(alerts, use_container_width=True)
+            if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
         st.bar_chart(alerts.set_index("Date")["Alert"].astype(str).value_counts())
 
         with tabs[6]:
@@ -155,9 +155,9 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
             if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
                 st.line_chart(payments.set_index("Date")["Amount"])
 
-    payments = result["payments"]
-    st.dataframe(payments, use_container_width=True)
-    if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
+    payments = pd.DataFrame(result["payments"])
+            st.dataframe(payments, use_container_width=True)
+            if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
         st.line_chart(payments.set_index("Date")["Amount"])
 
         with tabs[7]:
