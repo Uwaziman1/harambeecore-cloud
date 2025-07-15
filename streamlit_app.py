@@ -114,11 +114,13 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
 
         with tabs[2]:
             st.header("Milestones")
-            df = result["milestones"]
+            df = pd.DataFrame(result["milestones"])
+            df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
             st.dataframe(df, use_container_width=True)
-            start_date, end_date = st.date_input("Filter by Date Range", [df["Date"].min(), df["Date"].max()])
-            filtered_df = df[(df["Date"] >= pd.to_datetime(start_date)) & (df["Date"] <= pd.to_datetime(end_date))]
-            st.line_chart(filtered_df.set_index("Date")["Price"], use_container_width=True)
+            if not df.empty and "Date" in df.columns:
+                start_date, end_date = st.date_input("Filter by Date Range", [df["Date"].min(), df["Date"].max()])
+                filtered_df = df[(df["Date"] >= pd.to_datetime(start_date)) & (df["Date"] <= pd.to_datetime(end_date))]
+                st.line_chart(filtered_df.set_index("Date")["Price"], use_container_width=True)
 
         with tabs[3]:
             st.header("Contracts")
