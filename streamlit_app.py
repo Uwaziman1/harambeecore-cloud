@@ -83,10 +83,26 @@ if st.button("\U0001F680 Run Simulation"):
         result = run_pipeline()
 
     if isinstance(result, dict) and result.get("milestones") is not None:
-        tabs = st.tabs(["Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
+        tabs = st.tabs(["About", "Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
 
         with tabs[0]:
-            st.header("\U0001F4CB Project Summary")
+            st.header("📘 About HarambeeCore Dashboard")
+            st.markdown("""
+                The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
+
+                Using historical XAUUSD (gold price) data from 2004, the system tracks price movements and triggers milestones whenever prices cross significant thresholds — every $100 and $1,000 mark. These milestones simulate public fund events (like disbursements, audits, or allocations).
+
+                Each milestone automatically:
+                - Generates a smart contract
+                - Sends real-time alerts via email or WhatsApp to simulate notifications to key departments
+
+                This prototype showcases how automated, rule-based financial monitoring can replace manual oversight, reduce corruption, and empower citizens with visibility into fund movements.
+
+                HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem designed to rebuild trust in governance through accountability, automation, and people-first design.
+            """)
+
+        with tabs[1]:
+            st.header("📋 Project Summary")
             col1, col2 = st.columns(2)
             with col1:
                 for k, v in list(result["summary"].items())[:3]:
@@ -98,6 +114,9 @@ if st.button("\U0001F680 Run Simulation"):
             st.download_button(
                 label="📄 Download PDF Report",
                 data=buffer.getvalue(),
+                file_name="harambeecore_report.pdf",
+                mime="application/pdf"
+            ),
                 file_name="harambeecore_report.pdf",
                 mime="application/pdf"
             )
