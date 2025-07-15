@@ -86,20 +86,20 @@ if st.button("Run Simulation"):
         tabs = st.tabs(["About", "Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
 
         with tabs[0]:
-                        st.header("About HarambeeCore Dashboard")
+            st.header("About HarambeeCore Dashboard")
             st.markdown("""
-            The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
+The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
 
-            Using historical XAUUSD (gold price) data from 2004, the system tracks price movements and triggers milestones whenever prices cross significant thresholds — every $100 and $1,000 mark. These milestones simulate public fund events (like disbursements, audits, or allocations).
+Using historical XAUUSD (gold price) data from 2004, the system tracks price movements and triggers milestones whenever prices cross significant thresholds — every $100 and $1,000 mark. These milestones simulate public fund events (like disbursements, audits, or allocations).
 
-            Each milestone automatically:
-            - Generates a smart contract
-            - Sends real-time alerts via email or WhatsApp to simulate notifications to key departments
+Each milestone automatically:
+- Generates a smart contract
+- Sends real-time alerts via email or WhatsApp to simulate notifications to key departments
 
-            This prototype showcases how automated, rule-based financial monitoring can replace manual oversight, reduce corruption, and empower citizens with visibility into fund movements.
+This prototype showcases how automated, rule-based financial monitoring can replace manual oversight, reduce corruption, and empower citizens with visibility into fund movements.
 
-            HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem designed to rebuild trust in governance through accountability, automation, and people-first design.
-            """)
+HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem designed to rebuild trust in governance through accountability, automation, and people-first design.
+""")
 
     else:
         st.warning("Simulation did not return results. Check for errors in the pipeline.")
