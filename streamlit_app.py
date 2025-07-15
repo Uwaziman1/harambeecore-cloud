@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import openai
 import os
-from run_pipeline import run_pipeline
+import requests
 from io import BytesIO
 from fpdf import FPDF
 
@@ -80,7 +80,8 @@ st.caption("Audit-level transparency powered by immutable ledgers")
 
 if st.button("Run Simulation"):
     with st.spinner("Simulating bridge progress and contracts..."):
-        result = run_pipeline()
+        response = requests.get("https://harambeecore-cloud.onrender.com/simulate")
+        result = response.json() if response.status_code == 200 else {}
 
     if isinstance(result, dict) and result.get("milestones") is not None:
         tabs = st.tabs(["About", "Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
@@ -132,14 +133,14 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
                 st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
 
         with tabs[5]:
-    st.header("Alerts")
+            st.header("Alerts")
     alerts = result["alerts"]
     st.dataframe(alerts, use_container_width=True)
     if not alerts.empty and "Date" in alerts.columns and "Alert" in alerts.columns:
         st.bar_chart(alerts.set_index("Date")["Alert"].astype(str).value_counts())
 
         with tabs[6]:
-    st.header("Payments")
+            st.header("Payments")
     payments = result["payments"]
     st.dataframe(payments, use_container_width=True)
     if not payments.empty and "Date" in payments.columns and "Amount" in payments.columns:
