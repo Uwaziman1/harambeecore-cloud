@@ -87,7 +87,7 @@ if st.button("\U0001F680 Run Simulation"):
 
         with tabs[0]:
             st.image("/mnt/data/DALL·E 2025-03-26 11.54.47 - A modern, professional logo for HarambeeCoin, combining Kenyan heritage with global reach and transparency. The logo should feature___1. __A stylized .webp", width=200)
-                        st.header("📘 About HarambeeCore Dashboard")
+                        st.header("About HarambeeCore Dashboard")
             st.markdown("""
                 The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
 
@@ -103,7 +103,7 @@ if st.button("\U0001F680 Run Simulation"):
             """)
 
         with tabs[1]:
-            st.header("📋 Project Summary")
+            st.header("Project Summary")
             col1, col2 = st.columns(2)
             with col1:
                 for k, v in list(result["summary"].items())[:3]:
@@ -123,7 +123,7 @@ if st.button("\U0001F680 Run Simulation"):
             )
 
         with tabs[1]:
-            st.header("🧱 Milestones")
+            st.header("Milestones")
             milestone_df = result["milestones"]
             milestone_filter = st.multiselect("Filter by Milestone:", milestone_df["Milestone"].unique())
             if milestone_filter:
@@ -133,7 +133,7 @@ if st.button("\U0001F680 Run Simulation"):
             st.line_chart(milestone_df.set_index("Date")["Price"], use_container_width=True)
 
         with tabs[2]:
-            st.header("📜 Contract Validations")
+            st.header("Contract Validations")
             contract_df = result["contracts"]
             contract_filter = st.multiselect("Filter by Gap Context:", contract_df["Gap Context"].unique())
             if contract_filter:
@@ -143,7 +143,7 @@ if st.button("\U0001F680 Run Simulation"):
             st.bar_chart(contract_df.set_index(contract_df.columns[0])["Price"], use_container_width=True)
 
         with tabs[3]:
-            st.header("⚠️ Gap Analysis")
+            st.header("Gap Analysis")
             gap_df = result["gaps"]
             if not gap_df.empty:
                 min_gap, max_gap = float(gap_df["Gap"].min()), float(gap_df["Gap"].max())
@@ -155,12 +155,12 @@ if st.button("\U0001F680 Run Simulation"):
                 st.line_chart(gap_df.set_index("Date")["Gap"], use_container_width=True)
 
         with tabs[4]:
-            st.header("🔔 Alert Log")
+            st.header("Alert Log")
             st.dataframe(result["alerts"], use_container_width=True)
             st.download_button("Download Alerts", result["alerts"].to_csv(index=False), file_name="alerts.csv")
 
         with tabs[5]:
-            st.header("💰 Payment Batch")
+            st.header("Payment Batch")
             payment_df = result["payments"]
             if not payment_df.empty:
                 recipient_filter = st.selectbox("Filter by Recipient:", payment_df["Recipient"].unique())
@@ -171,7 +171,7 @@ if st.button("\U0001F680 Run Simulation"):
                 st.bar_chart(payment_df.set_index("Date")["Amount"], use_container_width=True)
 
         with tabs[6]:
-            st.header("🤖 GPT Explorer")
+            st.header("GPT Explorer")
             st.info("Type any question about the dataset below.")
             prompt = st.text_area("Ask the GPT-powered analyst (e.g. What happened in 2008?)")
             if prompt and openai.api_key:
@@ -198,7 +198,7 @@ if st.button("\U0001F680 Run Simulation"):
             st.warning(f"Chart unavailable: {e}")
 
         with tabs[7]:
-            st.header("📣 Contact & Sponsorship")
+            st.header("Contact & Sponsorship")
             st.markdown("""
                 If you'd like to support this project or request a custom deployment:
                 - 💬 **Email:** mbuguawian@gmail.com
