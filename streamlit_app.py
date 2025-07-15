@@ -86,7 +86,8 @@ if st.button("\U0001F680 Run Simulation"):
         tabs = st.tabs(["About", "Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
 
         with tabs[0]:
-            st.header("📘 About HarambeeCore Dashboard")
+            st.image("/mnt/data/DALL·E 2025-03-26 11.54.47 - A modern, professional logo for HarambeeCoin, combining Kenyan heritage with global reach and transparency. The logo should feature___1. __A stylized .webp", width=200)
+                        st.header("📘 About HarambeeCore Dashboard")
             st.markdown("""
                 The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
 
