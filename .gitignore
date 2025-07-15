@@ -3,4 +3,5 @@
 output/
 *.csv
 *.xlsx
+gap/XAUUSD_historical.csv
 
