@@ -12,7 +12,7 @@ GOLD_API_URL = "https://www.goldapi.io/api/XAU/USD"
 API_KEY = os.getenv("GOLDAPI_KEY")
 STATE_FILE = "milestone_state.json"
 
-def get_live_gold_price():
+def get_live_gold_data():
     if not API_KEY:
         raise EnvironmentError("GOLDAPI_KEY not set")
 
@@ -24,9 +24,12 @@ def get_live_gold_price():
     try:
         response = requests.get(GOLD_API_URL, headers=headers)
         data = response.json()
-        return round(float(data["price"]), 2)
+        return {
+            "price": round(float(data["price"]), 2),
+            "open_price": round(float(data["open_price"]), 2)
+        }
     except Exception as e:
-        print(f"Error fetching gold price: {e}")
+        print(f"Error fetching gold data: {e}")
         return None
 
 def get_current_milestone(price, interval=30):
