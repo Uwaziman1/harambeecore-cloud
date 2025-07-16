@@ -31,6 +31,23 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
+# Fetch Live Price for Header
+def fetch_live_price():
+    headers = {
+        "x-access-token": os.getenv("GOLDAPI_KEY"),
+        "Content-Type": "application/json"
+    }
+    try:
+        r = requests.get("https://www.goldapi.io/api/XAU/USD", headers=headers)
+        if r.status_code == 200:
+            data = r.json()
+            return round(data.get("price", 0.0), 2)
+        else:
+            return None
+    except Exception as e:
+        print(f"Live price fetch failed: {e}")
+        return None
+
 # PDF Export
 def generate_pdf(summary, contracts):
     pdf = FPDF("P", "mm", "A4")
@@ -73,12 +90,21 @@ def generate_pdf(summary, contracts):
 # GPT API
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Title & Mode Toggle
+# Page Header
 st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
+
+# Always show live XAUUSD price
+live_price = fetch_live_price()
+if live_price:
+    st.metric("Live XAUUSD Price", f"${live_price}")
+else:
+    st.warning("Live XAUUSD price not available.")
+
+# Mode Toggle
 mode = st.radio("Choose Mode", ["Historical Mode", "Live XAUUSD"], horizontal=True)
 
-# Always-visible Tabs
+# Tabs
 tabs = st.tabs(["About", "GPT Explorer", "Contact"])
 
 with tabs[0]:
@@ -162,14 +188,14 @@ elif mode == "Live XAUUSD":
     response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live")
     result = response.json() if response.status_code == 200 else {}
 
-    live_price = result.get("live_price")
+    live_price_backend = result.get("live_price")
     milestone_price = result.get("milestone_price")
     message = result.get("message", "Milestone check complete.")
 
-    st.subheader("Live Market Status")
+    st.subheader("Live Simulation Result")
     col1, col2 = st.columns(2)
-    col1.metric("Live XAUUSD Price", live_price if live_price else "Unavailable")
-    col2.metric("Current Milestone", milestone_price if milestone_price else "N/A")
+    col1.metric("Live Price (Backend)", live_price_backend if live_price_backend else "Unavailable")
+    col2.metric("Triggered Milestone", milestone_price if milestone_price else "N/A")
     st.info(message)
 
     if result.get("summary"):
