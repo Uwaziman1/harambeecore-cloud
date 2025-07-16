@@ -6,18 +6,21 @@ import os
 import requests
 from io import BytesIO
 from fpdf import FPDF
+from streamlit_autorefresh import st_autorefresh
+
+# Auto-refresh every 30 minutes (1800 seconds)
+st_autorefresh(interval=1800 * 1000, key="live_auto_refresh")
 
 # Page Setup
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 
 PRIMARY = "#006600"
-SECONDARY = "#FF0000"
 ACCENT = "#000000"
 
 # Styles
 st.markdown(f"""
     <style>
-        html, body, [class*="css"]  {{
+        html, body, [class*="css"] {{
             color: {ACCENT};
             background-color: #FFFFFF;
             font-family: 'Segoe UI', sans-serif;
@@ -25,14 +28,10 @@ st.markdown(f"""
         h1, h2, h3 {{ color: {PRIMARY}; }}
         .stTabs [role="tab"] {{ font-weight: bold; font-size: 16px; color: {PRIMARY}; }}
         .stDownloadButton button {{ background-color: {PRIMARY}; color: white; }}
-        .tag-chip {{ background-color: #eee; color: #000; font-size: 0.8rem; padding: 3px 8px; margin: 0 4px; border-radius: 5px; display: inline-block; }}
-        .status-ok {{ background-color: #28a745; color: white; }}
-        .status-warn {{ background-color: #ffc107; color: black; }}
-        .status-error {{ background-color: #dc3545; color: white; }}
     </style>
 """, unsafe_allow_html=True)
 
-# PDF Export
+# PDF Generator
 def generate_pdf(summary, contracts):
     pdf = FPDF("P", "mm", "A4")
     pdf.add_page()
@@ -67,20 +66,19 @@ def generate_pdf(summary, contracts):
 
     try:
         pdf_bytes = pdf.output(dest="S").encode("latin-1", errors="ignore")
-        buffer = BytesIO(pdf_bytes)
-        return buffer
+        return BytesIO(pdf_bytes)
     except Exception as e:
         print(f"PDF generation failed: {e}")
         return BytesIO()
 
-# OpenAI GPT API
+# GPT API Key
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Title and Mode
+# Title & Mode
 st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
 
-mode = st.radio("Choose Mode", ["Historical Mode", "Live XAUUSD (Phase 2)"], horizontal=True)
+mode = st.radio("Choose Mode", ["Historical Mode", "Live XAUUSD"], horizontal=True)
 
 # Always-visible tabs
 tabs = st.tabs(["About", "GPT Explorer", "Contact"])
@@ -88,11 +86,11 @@ tabs = st.tabs(["About", "GPT Explorer", "Contact"])
 with tabs[0]:
     st.header("About HarambeeCore Dashboard")
     st.markdown("""
-The HarambeeCore Dashboard demonstrates how real-time tech can bring transparency to public finance.
+The HarambeeCore Dashboard uses gold (XAUUSD) data to simulate milestones in public project funding.
 
-Using either historical or live gold price data (XAUUSD), the system tracks price movements and triggers milestones at every $30 interval. These milestones simulate public fund events (like disbursements or audits), and automatically generate smart contracts, alerts, and payments.
+Milestones occur at every $30 rise. These trigger automated smart contracts, alerts, and simulated payments.
 
-HarambeeCore is the foundation for HarambeeCoin, a blockchain ecosystem designed to rebuild trust in governance.
+Use **Historical Mode** to replay gold price history. Use **Live Mode** to trigger milestones in real time.
 """)
 
 with tabs[1]:
@@ -100,12 +98,12 @@ with tabs[1]:
     prompt = st.text_area("Ask the GPT-powered analyst (e.g. What happened in 2008?)")
     if prompt:
         if openai.api_key:
-            with st.spinner("Getting response from GPT..."):
+            with st.spinner("Getting response..."):
                 try:
                     response = openai.ChatCompletion.create(
                         model="gpt-3.5-turbo",
                         messages=[
-                            {"role": "system", "content": "You are a financial analyst helping users interpret historical market-linked events."},
+                            {"role": "system", "content": "You are a financial analyst interpreting historical macro events."},
                             {"role": "user", "content": prompt}
                         ]
                     )
@@ -126,78 +124,40 @@ with tabs[2]:
 # Historical Mode
 if mode == "Historical Mode":
     if st.button("Run Historical Simulation"):
-        with st.spinner("Simulating with historical data..."):
+        with st.spinner("Loading historical data..."):
             response = requests.get("https://harambeecore-cloud.onrender.com/simulate")
             result = response.json() if response.status_code == 200 else {}
 
-        if result.get("milestones"):
+        if result.get("summary"):
             summary = result["summary"]
             contracts = pd.DataFrame(result["contracts"])
-            milestones = pd.DataFrame(result["milestones"])
-            gaps = pd.DataFrame(result["gaps"])
-            alerts = pd.DataFrame(result["alerts"])
-            payments = pd.DataFrame(result["payments"])
-
-            sim_tabs = st.tabs(["Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments"])
-
-            with sim_tabs[0]:
-                st.header("Summary")
-                col1, col2 = st.columns(2)
-                for i, (k, v) in enumerate(summary.items()):
-                    (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
-                buffer = generate_pdf(summary, contracts)
-                st.download_button("Download PDF Report", data=buffer.getvalue(), file_name="harambeecore_report.pdf", mime="application/pdf")
-
-            with sim_tabs[1]:
-                st.header("Milestones")
-                milestones["Date"] = pd.to_datetime(milestones["Date"], errors="coerce")
-                st.dataframe(milestones, use_container_width=True)
-
-            with sim_tabs[2]:
-                st.header("Contracts")
-                st.dataframe(contracts, use_container_width=True)
-
-            with sim_tabs[3]:
-                st.header("Gaps")
-                st.dataframe(gaps, use_container_width=True)
-
-            with sim_tabs[4]:
-                st.header("Alerts")
-                st.dataframe(alerts, use_container_width=True)
-
-            with sim_tabs[5]:
-                st.header("Payments")
-                st.dataframe(payments, use_container_width=True)
-
+            st.subheader("Summary")
+            st.dataframe(summary)
+            st.subheader("Contracts")
+            st.dataframe(contracts)
         else:
-            st.warning("No milestones returned. Check backend or data source.")
+            st.warning("No results returned from historical simulation.")
 
 # Live Mode
-elif mode == "Live XAUUSD (Phase 2)":
-    if st.button("Check Live Price"):
-        with st.spinner("Fetching live XAUUSD data..."):
-            response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live")
-            result = response.json() if response.status_code == 200 else {}
+elif mode == "Live XAUUSD":
+    response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live")
+    result = response.json() if response.status_code == 200 else {}
 
-        if result.get("error"):
-            st.error(result["error"])
-        elif result.get("summary"):
-            st.success(f"Live XAUUSD Price: {result['live_price']}")
-            st.info(f"Triggered Milestone: {result['milestone_price']}")
+    if result.get("error"):
+        st.error(result["error"])
+    else:
+        st.metric("Live XAUUSD Price", result.get("live_price"))
+        st.metric("Current Milestone", result.get("milestone_price"))
+        st.info(result.get("message", "Milestone check complete."))
 
+        if result.get("summary"):
             summary = result["summary"]
             contracts = pd.DataFrame(result["contracts"])
 
-            live_tabs = st.tabs(["Summary", "Contracts"])
+            st.subheader("Live Summary")
+            col1, col2 = st.columns(2)
+            for i, (k, v) in enumerate(summary.items()):
+                (col1 if i % 2 == 0 else col2).metric(k, str(v))
 
-            with live_tabs[0]:
-                st.header("Live Summary")
-                col1, col2 = st.columns(2)
-                for i, (k, v) in enumerate(summary.items()):
-                    (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
-
-            with live_tabs[1]:
-                st.header("Live Contracts")
-                st.dataframe(contracts, use_container_width=True)
-        else:
-            st.warning("Live pipeline returned no data.")
+            st.subheader("Live Contracts")
+            st.dataframe(contracts, use_container_width=True)
