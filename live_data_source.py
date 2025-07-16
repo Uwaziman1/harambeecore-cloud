@@ -17,7 +17,6 @@ def get_live_gold_data():
         "x-access-token": API_KEY,
         "Content-Type": "application/json"
     }
-
     try:
         response = requests.get(GOLD_API_URL, headers=headers)
         data = response.json()
