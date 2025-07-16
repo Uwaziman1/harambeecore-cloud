@@ -193,7 +193,7 @@ elif mode == "Live XAUUSD":
     open_price = result.get("open_price")
     delta = result.get("delta")
     milestone_price = result.get("milestone_price")
-    direction = result.get("milestone_direction", "neutral")
+    direction = result.get("milestone_direction")
     message = result.get("message", "Milestone check complete.")
 
     st.subheader("Live Market Status")
@@ -204,15 +204,14 @@ elif mode == "Live XAUUSD":
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Live Price", f"${price}")
         col2.metric("Open Price", f"${open_price}")
-        col3.metric("Change", f"${delta}")
-        col4.metric("Milestone", f"${milestone_price}" if milestone_price else "N/A")
+        col3.metric("Change Since Open", f"${delta}")
+        col4.metric("Milestone", f"${milestone_price}")
 
         st.info(f"Milestone Direction: {direction.upper()} — {message}")
 
     if result.get("summary"):
         summary = result["summary"]
         contracts = pd.DataFrame(result["contracts"])
-
         st.subheader("Live Summary")
         col1, col2 = st.columns(2)
         for i, (k, v) in enumerate(summary.items()):
