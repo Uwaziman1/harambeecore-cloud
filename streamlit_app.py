@@ -1,22 +1,22 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import requests
 import openai
 import os
-import requests
 from io import BytesIO
 from fpdf import FPDF
 from dotenv import load_dotenv
 
+# Load .env
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# Streamlit config
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
-
 PRIMARY = "#006600"
-SECONDARY = "#FF0000"
 ACCENT = "#000000"
 
+# Style
 st.markdown(f"""
     <style>
         html, body, [class*="css"]  {{
@@ -27,14 +27,10 @@ st.markdown(f"""
         h1, h2, h3 {{ color: {PRIMARY}; }}
         .stTabs [role="tab"] {{ font-weight: bold; font-size: 16px; color: {PRIMARY}; }}
         .stDownloadButton button {{ background-color: {PRIMARY}; color: white; }}
-        .tag-chip {{ background-color: #eee; color: #000; font-size: 0.8rem; padding: 3px 8px; margin: 0 4px; border-radius: 5px; display: inline-block; }}
-        .status-ok {{ background-color: #28a745; color: white; }}
-        .status-warn {{ background-color: #ffc107; color: black; }}
-        .status-error {{ background-color: #dc3545; color: white; }}
     </style>
 """, unsafe_allow_html=True)
 
-
+# PDF Export
 def generate_pdf(summary, contracts):
     pdf = FPDF("P", "mm", "A4")
     pdf.add_page()
@@ -42,146 +38,98 @@ def generate_pdf(summary, contracts):
     pdf.set_text_color(0, 102, 0)
     pdf.cell(0, 10, "HarambeeCore™ Simulation Report", ln=True, align="C")
     pdf.ln(5)
-
     pdf.set_font("Arial", size=12)
     pdf.set_text_color(0, 0, 0)
     pdf.cell(0, 10, "Summary", ln=True)
     pdf.set_font("Arial", size=10)
     for k, v in summary.items():
         pdf.cell(0, 8, f"{k}: {v}", ln=True)
-
     pdf.ln(5)
-    pdf.set_font("Arial", size=12)
     pdf.cell(0, 10, "Contracts", ln=True)
-    pdf.set_font("Arial", size=10)
     col_width = pdf.w / 4.5
+    pdf.set_font("Arial", size=10)
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(col_width, 8, "Milestone", border=1, fill=True)
     pdf.cell(col_width, 8, "Price", border=1, fill=True)
     pdf.cell(col_width, 8, "Gap Context", border=1, fill=True)
     pdf.ln(8)
-    contracts_df = pd.DataFrame(contracts)
-    for _, row in contracts_df.iterrows():
-        pdf.cell(col_width, 8, str(row.get("Milestone", "N/A")), border=1)
-        pdf.cell(col_width, 8, str(row.get("Price", "N/A")), border=1)
-        pdf.cell(col_width, 8, str(row.get("Gap Context", "N/A")), border=1)
+    for _, row in pd.DataFrame(contracts).iterrows():
+        pdf.cell(col_width, 8, str(row.get("Milestone", "")), border=1)
+        pdf.cell(col_width, 8, str(row.get("Price", "")), border=1)
+        pdf.cell(col_width, 8, str(row.get("Gap Context", "")), border=1)
         pdf.ln(8)
+    return BytesIO(pdf.output(dest="S").encode("latin-1", errors="ignore"))
 
-    try:
-        pdf_bytes = pdf.output(dest="S").encode("latin-1", errors="ignore")
-        buffer = BytesIO(pdf_bytes)
-        return buffer
-    except Exception as e:
-        print(f"PDF generation failed: {e}")
-        return BytesIO()
-
-
-# Main Title
+# Title
 st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
 
-# Mode Toggle
-mode = st.selectbox("Select Mode", ["Historical", "Live XAUUSD"])
+# Toggle: Live or Historical
+mode = st.selectbox("Choose Mode", ["Historical", "Live XAUUSD"])
 
 # === HISTORICAL MODE ===
 if mode == "Historical":
     if st.button("Run Historical Simulation"):
-        with st.spinner("Simulating with historical gold data..."):
+        with st.spinner("Loading simulation..."):
             response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=historical")
             result = response.json() if response.status_code == 200 else {}
 
-        if isinstance(result, dict) and result.get("milestones") is not None:
-            summary = result.get("summary", {})
+        if result.get("summary"):
+            summary = result["summary"]
             milestones = pd.DataFrame(result.get("milestones", []))
             contracts = pd.DataFrame(result.get("contracts", []))
             gaps = pd.DataFrame(result.get("gaps", []))
             alerts = pd.DataFrame(result.get("alerts", []))
             payments = pd.DataFrame(result.get("payments", []))
 
-            tabs = st.tabs(["About", "Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
+            tabs = st.tabs(["Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments", "GPT Explorer", "Contact"])
 
             with tabs[0]:
-                st.header("About HarambeeCore Dashboard")
-                st.markdown("""
-The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
-
-Using historical XAUUSD (gold price) data from 2004, the system tracks price movements and triggers milestones whenever prices cross significant thresholds — every $100 and $1,000 mark. These milestones simulate public fund events (like disbursements, audits, or allocations).
-
-Each milestone automatically:
-- Generates a smart contract
-- Sends real-time alerts via email or WhatsApp to simulate notifications to key departments
-
-This prototype showcases how automated, rule-based financial monitoring can replace manual oversight, reduce corruption, and empower citizens with visibility into fund movements.
-
-HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem designed to rebuild trust in governance through accountability, automation, and people-first design.
-""")
-
-            with tabs[1]:
-                st.header("Summary")
+                st.header("Project Summary")
                 col1, col2 = st.columns(2)
                 for i, (k, v) in enumerate(summary.items()):
-                    (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
+                    (col1 if i % 2 == 0 else col2).metric(k, str(v))
                 buffer = generate_pdf(summary, contracts)
-                st.download_button("Download PDF Report", data=buffer.getvalue(), file_name="harambeecore_report.pdf", mime="application/pdf")
+                st.download_button("Download PDF Report", buffer.getvalue(), "harambeecore_report.pdf", "application/pdf")
+
+            with tabs[1]:
+                st.header("Milestones")
+                milestones["Date"] = pd.to_datetime(milestones["Date"], errors="coerce")
+                st.dataframe(milestones, use_container_width=True)
 
             with tabs[2]:
-                st.header("Milestones")
-                if not milestones.empty:
-                    milestones["Date"] = pd.to_datetime(milestones["Date"], errors="coerce")
-                    st.dataframe(milestones, use_container_width=True)
-                    start_date, end_date = st.date_input("Filter by Date Range", [milestones["Date"].min(), milestones["Date"].max()])
-                    filtered_df = milestones[(milestones["Date"] >= pd.to_datetime(start_date)) & (milestones["Date"] <= pd.to_datetime(end_date))]
-                    st.line_chart(filtered_df.set_index("Date")["Price"], use_container_width=True)
+                st.header("Contracts")
+                st.dataframe(contracts, use_container_width=True)
 
             with tabs[3]:
-                st.header("Contracts")
-                if not contracts.empty:
-                    st.dataframe(contracts, use_container_width=True)
-                    if "Milestone" in contracts.columns and "Price" in contracts.columns:
-                        st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
+                st.header("Gaps")
+                st.dataframe(gaps, use_container_width=True)
 
             with tabs[4]:
-                st.header("Gaps")
-                if not gaps.empty:
-                    st.dataframe(gaps, use_container_width=True)
-                    if "Date" in gaps.columns and "Gap" in gaps.columns:
-                        st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
+                st.header("Alerts")
+                st.dataframe(alerts, use_container_width=True)
 
             with tabs[5]:
-                st.header("Alerts")
-                if not alerts.empty:
-                    st.dataframe(alerts, use_container_width=True)
-                    if "Date" in alerts.columns and "Message" in alerts.columns:
-                        st.bar_chart(alerts.set_index("Date")["Message"].astype(str).value_counts())
+                st.header("Payments")
+                st.dataframe(payments, use_container_width=True)
 
             with tabs[6]:
-                st.header("Payments")
-                if not payments.empty:
-                    st.dataframe(payments, use_container_width=True)
-                    if "Date" in payments.columns and "Amount" in payments.columns:
-                        st.line_chart(payments.set_index("Date")["Amount"])
+                st.header("GPT Explorer")
+                prompt = st.text_area("Ask the GPT-powered analyst")
+                if prompt and openai.api_key:
+                    try:
+                        response = openai.ChatCompletion.create(
+                            model="gpt-3.5-turbo",
+                            messages=[
+                                {"role": "system", "content": "You are a financial analyst."},
+                                {"role": "user", "content": prompt}
+                            ]
+                        )
+                        st.success(response["choices"][0]["message"]["content"])
+                    except Exception as e:
+                        st.error(str(e))
 
             with tabs[7]:
-                st.header("GPT Explorer")
-                prompt = st.text_area("Ask the GPT-powered analyst (e.g. What happened in 2008?)")
-                if prompt:
-                    if openai.api_key:
-                        with st.spinner("Getting response from GPT..."):
-                            try:
-                                response = openai.ChatCompletion.create(
-                                    model="gpt-3.5-turbo",
-                                    messages=[
-                                        {"role": "system", "content": "You are a financial analyst helping users interpret historical market-linked events."},
-                                        {"role": "user", "content": prompt}
-                                    ]
-                                )
-                                st.success(response["choices"][0]["message"]["content"])
-                            except Exception as e:
-                                st.error(f"Error: {e}")
-                    else:
-                        st.warning("Missing OpenAI API key.")
-
-            with tabs[8]:
                 st.header("Contact")
                 st.markdown("""
 **Email:** mbuguawian@gmail.com  
@@ -190,40 +138,45 @@ HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem de
 """)
 
         else:
-            st.warning("Simulation did not return results. Check for errors in the pipeline.")
+            st.error("Simulation failed or returned no data.")
 
 # === LIVE MODE ===
 elif mode == "Live XAUUSD":
-    response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live")
-    result = response.json() if response.status_code == 200 else {}
+    st.subheader("Live Market Monitor")
+    try:
+        response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live", timeout=15)
+        result = response.json() if response.status_code == 200 else {}
+    except Exception as e:
+        st.error(f"Failed to fetch live data: {e}")
+        result = {}
 
-    price = result.get("live_price")
-    open_price = result.get("open_price")
-    delta = result.get("delta")
-    milestone_price = result.get("milestone_price")
-    direction = result.get("milestone_direction")
-    message = result.get("message", "Milestone check complete.")
-
-    st.subheader("Live Market Status")
-
-    if price is None or open_price is None:
+    if result.get("live_price") is None:
         st.error("Live data unavailable.")
     else:
+        # Display live values
+        price = result["live_price"]
+        open_price = result.get("open_price")
+        delta = result.get("delta")
+        milestone_price = result.get("milestone_price")
+        direction = result.get("milestone_direction", "neutral").upper()
+        message = result.get("message", "")
+
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Live Price", f"${price}")
         col2.metric("Open Price", f"${open_price}")
         col3.metric("Change Since Open", f"${delta}")
         col4.metric("Milestone", f"${milestone_price}")
 
-        st.info(f"Milestone Direction: {direction.upper()} — {message}")
+        st.info(f"Milestone Direction: **{direction}** — {message}")
 
-    if result.get("summary"):
-        st.subheader("Live Summary")
-        summary = result["summary"]
-        contracts = pd.DataFrame(result["contracts"])
-        col1, col2 = st.columns(2)
-        for i, (k, v) in enumerate(summary.items()):
-            (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
+        if result.get("summary"):
+            st.subheader("Live Summary")
+            summary = result["summary"]
+            col1, col2 = st.columns(2)
+            for i, (k, v) in enumerate(summary.items()):
+                (col1 if i % 2 == 0 else col2).metric(k, str(v))
 
-        st.subheader("Live Contracts")
-        st.dataframe(contracts, use_container_width=True)
+        contracts = pd.DataFrame(result.get("contracts", []))
+        if not contracts.empty:
+            st.subheader("Live Contracts")
+            st.dataframe(contracts, use_container_width=True)
