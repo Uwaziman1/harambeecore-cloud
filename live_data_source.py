@@ -1,3 +1,5 @@
+# live_data_source.py
+
 import requests
 import os
 import json
@@ -17,8 +19,8 @@ def get_live_gold_data():
     }
 
     try:
-        r = requests.get(GOLD_API_URL, headers=headers)
-        data = r.json()
+        response = requests.get(GOLD_API_URL, headers=headers)
+        data = response.json()
         return {
             "price": round(float(data["price"]), 2),
             "open_price": round(float(data["open_price"]), 2)
