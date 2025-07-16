@@ -7,7 +7,7 @@ from core.alert_log import generate_alert_log
 from core.generate_payment_batch import generate_payment_batch
 from core.summary_engine import summarize_project
 from live_data_source import (
-    get_live_gold_price,
+    get_live_gold_data,
     get_current_milestone,
     create_live_dataframe,
     load_last_milestone,
@@ -25,14 +25,19 @@ def run_pipeline(mode="historical") -> dict:
             df["Date"] = pd.to_datetime(df["Date"], format="%Y.%m.%d %H:%M")
 
         elif mode == "live":
-            price = get_live_gold_price()
-            if price is None:
+            data = get_live_gold_data()
+            if not data or "price" not in data or "open_price" not in data:
                 return {
-                    "error": "Failed to fetch live gold price",
+                    "error": "Failed to fetch live gold data",
                     "live_price": None,
+                    "open_price": None,
                     "milestone_price": None,
                     "message": "Could not reach GoldAPI."
                 }
+
+            price = data["price"]
+            open_price = data["open_price"]
+            delta = round(price - open_price, 2)
 
             milestone_price = get_current_milestone(price, interval=30)
             last_milestone = load_last_milestone()
@@ -40,6 +45,8 @@ def run_pipeline(mode="historical") -> dict:
             if milestone_price <= last_milestone:
                 return {
                     "live_price": price,
+                    "open_price": open_price,
+                    "delta": delta,
                     "milestone_price": milestone_price,
                     "message": f"No new milestone. Last was {last_milestone}"
                 }
@@ -66,6 +73,8 @@ def run_pipeline(mode="historical") -> dict:
                 "payments": payments,
                 "summary": summary,
                 "live_price": price,
+                "open_price": open_price,
+                "delta": delta,
                 "milestone_price": milestone_price,
                 "message": f"New milestone triggered at ${milestone_price}"
             }
@@ -73,7 +82,6 @@ def run_pipeline(mode="historical") -> dict:
         else:
             return {"error": "Invalid mode"}
 
-        # Historical flow (unchanged)
         milestone_log = simulate_milestones(df)
         contracts = generate_contracts(milestone_log)
         gaps = analyze_gaps(milestone_log)
@@ -103,6 +111,7 @@ def run_pipeline(mode="historical") -> dict:
         return {
             "error": str(e),
             "live_price": None,
+            "open_price": None,
             "milestone_price": None,
             "message": "Exception in pipeline"
         }
