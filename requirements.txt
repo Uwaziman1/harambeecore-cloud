@@ -6,3 +6,4 @@ fpdf
 fastapi
 uvicorn
 streamlit-autorefresh
+python-dotenv
