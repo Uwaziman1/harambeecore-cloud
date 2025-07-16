@@ -79,7 +79,8 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 # Title + Mode Selector
 st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
-mode = st.radio("📊 Choose Mode", ["Historical Mode", "Live Mode"], horizontal=True)
+
+mode = st.radio("📊 Choose Mode", ["Historical Mode", "Live XAUUSD (Coming Soon)"], horizontal=True)
 
 # Always-visible tabs
 tabs = st.tabs(["About", "GPT Explorer", "Contact"])
@@ -192,6 +193,6 @@ if mode == "Historical Mode":
         else:
             st.warning("Simulation did not return results. Check for errors in the pipeline.")
 
-# Placeholder for Live Mode
-elif mode == "Live Mode":
-    st.info("🚧 Live Mode is under development. Soon you'll see real-time smart contracts triggered by live gold prices (XAUUSD). Stay tuned!")
+# Live Mode Placeholder
+elif mode == "Live XAUUSD (Coming Soon)":
+    st.info("🔮 Live Mode will use real-time gold prices (XAUUSD) to simulate smart contracts and milestone triggers in real time.\n\nStay tuned for Phase 2!")
