@@ -1,15 +1,17 @@
-# live_data_source.py
-
 import requests
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+
 load_dotenv()
 
 GOLD_API_URL = "https://www.goldapi.io/api/XAU/USD"
 API_KEY = os.getenv("GOLDAPI_KEY")
 
 def get_live_gold_price():
+    if not API_KEY:
+        raise EnvironmentError("GOLDAPI_KEY not found in environment variables.")
+
     headers = {
         "x-access-token": API_KEY,
         "Content-Type": "application/json"
@@ -29,9 +31,4 @@ def get_current_milestone(price, interval=30):
 
 def create_live_dataframe(price):
     now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
-    return [
-        {
-            "Date": now,
-            "Price": price
-        }
-    ]
+    return [{"Date": now, "Price": price}]
