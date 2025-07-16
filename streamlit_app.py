@@ -69,7 +69,7 @@ st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
 
 # Mode Toggle
-mode = st.selectbox("Choose Mode", ["Historical", "Live XAUUSD"])
+mode = st.radio("Choose Mode", ["Historical", "Live XAUUSD"], horizontal=True)
 
 # === HISTORICAL ===
 if mode == "Historical":
