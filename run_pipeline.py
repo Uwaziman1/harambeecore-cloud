@@ -1,3 +1,23 @@
+import logging
+import pandas as pd
+
+from core.analyze_xau import analyze_gaps
+from core.milestone_simulator import simulate_milestones
+from core.generate_contracts import generate_contracts
+from core.create_alerts import create_alerts
+from core.generate_payment_batch import generate_payment_batch
+from core.alert_log import generate_alert_log
+from core.summary_engine import summarize_project
+from live_data_source import (
+    get_live_gold_data,
+    get_current_milestone,
+    create_live_dataframe,
+    load_state,
+    save_state
+)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
 def run_pipeline(mode="historical") -> dict:
     try:
         if mode == "historical":
@@ -101,3 +121,6 @@ def run_pipeline(mode="historical") -> dict:
             "milestone_direction": None,
             "message": "Exception in pipeline"
         }
+
+if __name__ == "__main__":
+    run_pipeline()
