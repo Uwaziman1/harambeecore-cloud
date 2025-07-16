@@ -1,5 +1,3 @@
-# run_pipeline.py
-
 import logging
 import pandas as pd
 from core.analyze_xau import analyze_gaps
