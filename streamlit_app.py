@@ -14,7 +14,7 @@ PRIMARY = "#006600"
 SECONDARY = "#FF0000"
 ACCENT = "#000000"
 
-# Custom Styles
+# Styles
 st.markdown(f"""
     <style>
         html, body, [class*="css"]  {{
@@ -73,14 +73,14 @@ def generate_pdf(summary, contracts):
         print(f"PDF generation failed: {e}")
         return BytesIO()
 
-# API Key for GPT
+# OpenAI GPT API
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Title + Mode Selector
+# Title and Mode
 st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
 
-mode = st.radio("📊 Choose Mode", ["Historical Mode", "Live XAUUSD (Coming Soon)"], horizontal=True)
+mode = st.radio("Choose Mode", ["Historical Mode", "Live XAUUSD (Phase 2)"], horizontal=True)
 
 # Always-visible tabs
 tabs = st.tabs(["About", "GPT Explorer", "Contact"])
@@ -88,17 +88,11 @@ tabs = st.tabs(["About", "GPT Explorer", "Contact"])
 with tabs[0]:
     st.header("About HarambeeCore Dashboard")
     st.markdown("""
-The HarambeeCore Dashboard is a live prototype that demonstrates how technology can bring real-time transparency to public finance.
+The HarambeeCore Dashboard demonstrates how real-time tech can bring transparency to public finance.
 
-Using historical XAUUSD (gold price) data from 2004, the system tracks price movements and triggers milestones whenever prices cross significant thresholds — every $100 and $1,000 mark. These milestones simulate public fund events (like disbursements, audits, or allocations).
+Using either historical or live gold price data (XAUUSD), the system tracks price movements and triggers milestones at every $30 interval. These milestones simulate public fund events (like disbursements or audits), and automatically generate smart contracts, alerts, and payments.
 
-Each milestone automatically:
-- Generates a smart contract
-- Sends real-time alerts via email or WhatsApp to simulate notifications to key departments
-
-This prototype showcases how automated, rule-based financial monitoring can replace manual oversight, reduce corruption, and empower citizens with visibility into fund movements.
-
-HarambeeCore is the foundation for HarambeeCoin, a blockchain-based ecosystem designed to rebuild trust in governance through accountability, automation, and people-first design.
+HarambeeCore is the foundation for HarambeeCoin, a blockchain ecosystem designed to rebuild trust in governance.
 """)
 
 with tabs[1]:
@@ -129,20 +123,20 @@ with tabs[2]:
 **Foundation:** HarambeeCore™ RZ77191
 """)
 
-# Historical Mode Logic
+# Historical Mode
 if mode == "Historical Mode":
-    if st.button("▶️ Run Historical Simulation"):
-        with st.spinner("Simulating bridge progress and contracts..."):
+    if st.button("Run Historical Simulation"):
+        with st.spinner("Simulating with historical data..."):
             response = requests.get("https://harambeecore-cloud.onrender.com/simulate")
             result = response.json() if response.status_code == 200 else {}
 
-        if isinstance(result, dict) and result.get("milestones") is not None:
-            summary = result.get("summary", {})
-            milestones = pd.DataFrame(result.get("milestones", []))
-            contracts = pd.DataFrame(result.get("contracts", []))
-            gaps = pd.DataFrame(result.get("gaps", []))
-            alerts = pd.DataFrame(result.get("alerts", []))
-            payments = pd.DataFrame(result.get("payments", []))
+        if result.get("milestones"):
+            summary = result["summary"]
+            contracts = pd.DataFrame(result["contracts"])
+            milestones = pd.DataFrame(result["milestones"])
+            gaps = pd.DataFrame(result["gaps"])
+            alerts = pd.DataFrame(result["alerts"])
+            payments = pd.DataFrame(result["payments"])
 
             sim_tabs = st.tabs(["Summary", "Milestones", "Contracts", "Gaps", "Alerts", "Payments"])
 
@@ -156,43 +150,54 @@ if mode == "Historical Mode":
 
             with sim_tabs[1]:
                 st.header("Milestones")
-                if not milestones.empty:
-                    milestones["Date"] = pd.to_datetime(milestones["Date"], errors="coerce")
-                    st.dataframe(milestones, use_container_width=True)
-                    start_date, end_date = st.date_input("Filter by Date Range", [milestones["Date"].min(), milestones["Date"].max()])
-                    filtered_df = milestones[(milestones["Date"] >= pd.to_datetime(start_date)) & (milestones["Date"] <= pd.to_datetime(end_date))]
-                    st.line_chart(filtered_df.set_index("Date")["Price"], use_container_width=True)
+                milestones["Date"] = pd.to_datetime(milestones["Date"], errors="coerce")
+                st.dataframe(milestones, use_container_width=True)
 
             with sim_tabs[2]:
                 st.header("Contracts")
-                if not contracts.empty:
-                    st.dataframe(contracts, use_container_width=True)
-                    if "Milestone" in contracts.columns and "Price" in contracts.columns:
-                        st.bar_chart(contracts.set_index("Milestone")["Price"], use_container_width=True)
+                st.dataframe(contracts, use_container_width=True)
 
             with sim_tabs[3]:
                 st.header("Gaps")
-                if not gaps.empty:
-                    st.dataframe(gaps, use_container_width=True)
-                    if "Date" in gaps.columns and "Gap" in gaps.columns:
-                        st.line_chart(gaps.set_index("Date")["Gap"], use_container_width=True)
+                st.dataframe(gaps, use_container_width=True)
 
             with sim_tabs[4]:
                 st.header("Alerts")
-                if not alerts.empty:
-                    st.dataframe(alerts, use_container_width=True)
-                    if "Date" in alerts.columns and "Message" in alerts.columns:
-                        st.bar_chart(alerts.set_index("Date")["Message"].astype(str).value_counts())
+                st.dataframe(alerts, use_container_width=True)
 
             with sim_tabs[5]:
                 st.header("Payments")
-                if not payments.empty:
-                    st.dataframe(payments, use_container_width=True)
-                    if "Date" in payments.columns and "Amount" in payments.columns:
-                        st.line_chart(payments.set_index("Date")["Amount"])
-        else:
-            st.warning("Simulation did not return results. Check for errors in the pipeline.")
+                st.dataframe(payments, use_container_width=True)
 
-# Live Mode Placeholder
-elif mode == "Live XAUUSD (Coming Soon)":
-    st.info("🔮 Live Mode will use real-time gold prices (XAUUSD) to simulate smart contracts and milestone triggers in real time.\n\nStay tuned for Phase 2!")
+        else:
+            st.warning("No milestones returned. Check backend or data source.")
+
+# Live Mode
+elif mode == "Live XAUUSD (Phase 2)":
+    if st.button("Check Live Price"):
+        with st.spinner("Fetching live XAUUSD data..."):
+            response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live")
+            result = response.json() if response.status_code == 200 else {}
+
+        if result.get("error"):
+            st.error(result["error"])
+        elif result.get("summary"):
+            st.success(f"Live XAUUSD Price: {result['live_price']}")
+            st.info(f"Triggered Milestone: {result['milestone_price']}")
+
+            summary = result["summary"]
+            contracts = pd.DataFrame(result["contracts"])
+
+            live_tabs = st.tabs(["Summary", "Contracts"])
+
+            with live_tabs[0]:
+                st.header("Live Summary")
+                col1, col2 = st.columns(2)
+                for i, (k, v) in enumerate(summary.items()):
+                    (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
+
+            with live_tabs[1]:
+                st.header("Live Contracts")
+                st.dataframe(contracts, use_container_width=True)
+        else:
+            st.warning("Live pipeline returned no data.")
