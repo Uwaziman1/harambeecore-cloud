@@ -24,7 +24,7 @@ def run_pipeline(mode="historical") -> dict:
             df = pd.read_csv("gap/XAUUSD_historical.csv", sep=';')
             df["Date"] = pd.to_datetime(df["Date"], format="%Y.%m.%d %H:%M")
 
-    elif mode == "live":
+ elif mode == "live":
     data = get_live_gold_data()
     if not data:
         return {
@@ -32,6 +32,7 @@ def run_pipeline(mode="historical") -> dict:
             "live_price": None,
             "open_price": None,
             "milestone_price": None,
+            "milestone_direction": None,
             "message": "Could not reach GoldAPI."
         }
 
@@ -83,3 +84,4 @@ def run_pipeline(mode="historical") -> dict:
         "milestone_direction": direction,
         "message": f"{'New milestone' if direction == 'progress' else 'Delay'} detected at ${milestone_price}"
     }
+
