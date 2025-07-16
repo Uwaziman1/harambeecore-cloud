@@ -7,14 +7,11 @@ from io import BytesIO
 from fpdf import FPDF
 from dotenv import load_dotenv
 
-# Load secrets
 load_dotenv()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-# Page config
 st.set_page_config(page_title="HarambeeCore Pilot Dashboard", layout="wide")
 
-# Style
 PRIMARY = "#006600"
 ACCENT = "#000000"
 st.markdown(f"""
@@ -30,7 +27,6 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- PDF Export Fix ---
 def safe_text(text):
     return str(text).encode("latin1", "replace").decode("latin1")
 
@@ -68,19 +64,19 @@ def generate_pdf(summary, contracts):
 
     return BytesIO(pdf.output(dest="S").encode("latin1", "replace"))
 
-# --- App Title ---
+# Title
 st.title("HarambeeCore Pilot Dashboard")
 st.caption("Audit-level transparency powered by immutable ledgers")
 
-# --- Mode Toggle ---
+# Mode Toggle
 mode = st.selectbox("Choose Mode", ["Historical", "Live XAUUSD"])
 
-# === HISTORICAL MODE ===
+# === HISTORICAL ===
 if mode == "Historical":
     if st.button("Run Historical Simulation"):
-        with st.spinner("Running historical simulation..."):
-            response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=historical")
-            result = response.json() if response.status_code == 200 else {}
+        with st.spinner("Simulating..."):
+            res = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=historical")
+            result = res.json() if res.status_code == 200 else {}
 
         if result.get("summary"):
             summary = result["summary"]
@@ -103,37 +99,46 @@ if mode == "Historical":
             with tabs[1]:
                 st.header("Milestones")
                 milestones["Date"] = pd.to_datetime(milestones["Date"], errors="coerce")
-                st.dataframe(milestones, use_container_width=True)
+                st.dataframe(milestones)
+                if not milestones.empty and "Price" in milestones.columns:
+                    st.line_chart(milestones.set_index("Date")["Price"])
 
             with tabs[2]:
                 st.header("Contracts")
-                st.dataframe(contracts, use_container_width=True)
+                st.dataframe(contracts)
+                if not contracts.empty and "Price" in contracts.columns:
+                    st.bar_chart(contracts.set_index("Milestone")["Price"])
 
             with tabs[3]:
                 st.header("Gaps")
-                st.dataframe(gaps, use_container_width=True)
+                gaps["Date"] = pd.to_datetime(gaps["Date"], errors="coerce")
+                st.dataframe(gaps)
+                if not gaps.empty:
+                    st.line_chart(gaps.set_index("Date")["Gap"])
 
             with tabs[4]:
                 st.header("Alerts")
-                st.dataframe(alerts, use_container_width=True)
+                alerts["Date"] = pd.to_datetime(alerts["Date"], errors="coerce")
+                st.dataframe(alerts)
 
             with tabs[5]:
                 st.header("Payments")
-                st.dataframe(payments, use_container_width=True)
+                payments["Date"] = pd.to_datetime(payments["Date"], errors="coerce")
+                st.dataframe(payments)
 
             with tabs[6]:
                 st.header("GPT Explorer")
                 prompt = st.text_area("Ask the GPT-powered analyst")
                 if prompt:
                     try:
-                        response = openai.ChatCompletion.create(
+                        gpt = openai.ChatCompletion.create(
                             model="gpt-3.5-turbo",
                             messages=[
                                 {"role": "system", "content": "You are a financial analyst."},
                                 {"role": "user", "content": prompt}
                             ]
                         )
-                        st.success(response["choices"][0]["message"]["content"])
+                        st.success(gpt["choices"][0]["message"]["content"])
                     except Exception as e:
                         st.error(f"OpenAI error: {e}")
 
@@ -145,46 +150,27 @@ if mode == "Historical":
 **Foundation:** HarambeeCore™ RZ77191
 """)
 
-        else:
-            st.error("No data returned from simulation.")
-
 # === LIVE MODE ===
-elif mode == "Live XAUUSD":
+if mode == "Live XAUUSD":
     st.subheader("Live Market Status")
-
     try:
-        response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live", timeout=15)
-        result = response.json() if response.status_code == 200 else {}
+        r = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live", timeout=10)
+        data = r.json() if r.status_code == 200 else {}
     except Exception as e:
-        st.error(f"Live fetch error: {e}")
-        result = {}
+        st.error(f"Live fetch failed: {e}")
+        data = {}
 
-    if result.get("live_price") is None:
-        st.error("Live data unavailable.")
+    if data.get("live_price"):
+        st.metric("Live Price", f"${data['live_price']}")
+        st.metric("Open Price", f"${data['open_price']}")
+        st.metric("Change Since Open", f"${data['delta']}")
+        st.metric("Current Milestone", f"${data['milestone_price']}")
+        st.info(f"Milestone Direction: {data['milestone_direction']}")
+        st.success(data["message"])
+
+        if data.get("summary"):
+            st.subheader("Live Snapshot Summary")
+            for k, v in data["summary"].items():
+                st.metric(k, str(v))
     else:
-        # Live price metrics
-        price = result["live_price"]
-        open_price = result["open_price"]
-        delta = result["delta"]
-        milestone_price = result["milestone_price"]
-        direction = result.get("milestone_direction", "neutral").upper()
-        message = result.get("message", "Milestone check complete.")
-
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Live Price", f"${price}")
-        col2.metric("Open Price", f"${open_price}")
-        col3.metric("Change Since Open", f"${delta}")
-        col4.metric("Milestone", f"${milestone_price}")
-
-        st.info(f"Milestone Direction: **{direction}** — {message}")
-
-        if result.get("summary"):
-            st.subheader("Live Summary")
-            summary = result["summary"]
-            contracts = pd.DataFrame(result.get("contracts", []))
-            col1, col2 = st.columns(2)
-            for i, (k, v) in enumerate(summary.items()):
-                (col1 if i % 2 == 0 else col2).metric(k, str(v))
-
-            st.subheader("Live Contracts")
-            st.dataframe(contracts, use_container_width=True)
+        st.error("Live data unavailable.")
