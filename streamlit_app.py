@@ -185,19 +185,26 @@ if mode == "Historical Mode":
         else:
             st.warning("Simulation did not return results. Check backend or data source.")
 
-# === Live Mode ===
 elif mode == "Live XAUUSD":
     response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live")
     result = response.json() if response.status_code == 200 else {}
 
-    live_price_backend = result.get("live_price")
+    price = result.get("live_price")
+    open_price = result.get("open_price")
+    delta = result.get("delta")
     milestone_price = result.get("milestone_price")
     message = result.get("message", "Milestone check complete.")
 
     st.subheader("Live Simulation Result")
-    col1, col2 = st.columns(2)
-    col1.metric("Live Price (Backend)", live_price_backend if live_price_backend else "Unavailable")
-    col2.metric("Triggered Milestone", milestone_price if milestone_price else "N/A")
+
+    if price is None or open_price is None:
+        st.error("Live data unavailable.")
+    else:
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Live Price (Backend)", f"${price}")
+        col2.metric("Daily Open", f"${open_price}")
+        col3.metric("Change Since Open", f"${delta}", delta_color="normal")
+
     st.info(message)
 
     if result.get("summary"):
