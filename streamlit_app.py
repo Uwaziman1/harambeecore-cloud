@@ -185,62 +185,38 @@ if mode == "Historical Mode":
         else:
             st.warning("Simulation did not return results. Check backend or data source.")
 
-elif mode == "live":
-    data = get_live_gold_data()
-    if not data:
-        return {
-            "error": "Failed to fetch live gold data",
-            "live_price": None,
-            "open_price": None,
-            "milestone_price": None,
-            "message": "Could not reach GoldAPI."
-        }
+elif mode == "Live XAUUSD":
+    response = requests.get("https://harambeecore-cloud.onrender.com/simulate?mode=live")
+    result = response.json() if response.status_code == 200 else {}
 
-    price = data["price"]
-    open_price = data["open_price"]
-    delta = round(price - open_price, 2)
+    price = result.get("live_price")
+    open_price = result.get("open_price")
+    delta = result.get("delta")
+    milestone_price = result.get("milestone_price")
+    direction = result.get("milestone_direction", "neutral")
+    message = result.get("message", "Milestone check complete.")
 
-    milestone_price = get_current_milestone(price, interval=30)
-    state = load_state()
-    last_milestone = state.get("last_milestone", 0)
+    st.subheader("Live Market Status")
 
-    if milestone_price == last_milestone:
-        direction = "neutral"
-        return {
-            "live_price": price,
-            "open_price": open_price,
-            "delta": delta,
-            "milestone_price": milestone_price,
-            "milestone_direction": direction,
-            "message": f"No milestone change. Still at ${milestone_price}"
-        }
+    if price is None or open_price is None:
+        st.error("Live data unavailable.")
+    else:
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Live Price", f"${price}")
+        col2.metric("Open Price", f"${open_price}")
+        col3.metric("Change", f"${delta}")
+        col4.metric("Milestone", f"${milestone_price}" if milestone_price else "N/A")
 
-    direction = "progress" if milestone_price > last_milestone else "delay"
-    save_state(milestone_price, direction)
+        st.info(f"Milestone Direction: {direction.upper()} — {message}")
 
-    df = pd.DataFrame(create_live_dataframe(price))
-    df["Date"] = pd.to_datetime(df["Date"])
+    if result.get("summary"):
+        summary = result["summary"]
+        contracts = pd.DataFrame(result["contracts"])
 
-    milestone_log = simulate_milestones(df, step=30)
-    contracts = generate_contracts(milestone_log)
-    gaps = analyze_gaps(milestone_log)
-    alerts = generate_alert_log(contracts)
-    payments = generate_payment_batch(contracts)
-    summary = summarize_project(milestone_log, contracts)
+        st.subheader("Live Summary")
+        col1, col2 = st.columns(2)
+        for i, (k, v) in enumerate(summary.items()):
+            (col1 if i % 2 == 0 else col2).metric(label=k, value=str(v))
 
-    contracts["Gap Context"] = [f"Live Snapshot - {direction}"]
-
-    return {
-        "milestones": milestone_log,
-        "contracts": contracts,
-        "gaps": gaps,
-        "alerts": alerts,
-        "payments": payments,
-        "summary": summary,
-        "live_price": price,
-        "open_price": open_price,
-        "delta": delta,
-        "milestone_price": milestone_price,
-        "milestone_direction": direction,
-        "message": f"{'New milestone' if direction == 'progress' else 'Delay'} detected at ${milestone_price}"
-    }
+        st.subheader("Live Contracts")
+        st.dataframe(contracts, use_container_width=True)
