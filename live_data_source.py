@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 GOLD_API_URL = "https://www.goldapi.io/api/XAU/USD"
-API_KEY = os.getenv("GOLDAPI_KEY", "goldapi-4c7dtksmd5sxwxx-io")
+API_KEY = os.getenv("GOLDAPI_KEY")
 
 def get_live_gold_price():
     headers = {
