@@ -3,6 +3,8 @@
 import requests
 import os
 from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv()
 
 GOLD_API_URL = "https://www.goldapi.io/api/XAU/USD"
 API_KEY = os.getenv("GOLDAPI_KEY")
