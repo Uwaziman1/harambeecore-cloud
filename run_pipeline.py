@@ -13,14 +13,23 @@ from core.summary_engine import summarize_project
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def run_pipeline() -> dict:
+
+def run_pipeline(mode="historical") -> dict:
     """Run Build The Bridge simulation pipeline."""
-    logging.info("🚀 Build The Bridge Simulation Starting...")
+    logging.info(f"🚀 Build The Bridge Simulation Starting... [Mode: {mode}]")
 
     try:
-        logging.info("Reading XAUUSD data from gap/XAUUSD_historical.csv...")
-        df = pd.read_csv("gap/XAUUSD_historical.csv", sep=';')
-        df['Date'] = pd.to_datetime(df['Date'], format='%Y.%m.%d %H:%M')
+        if mode == "historical":
+            logging.info("Reading XAUUSD data from gap/XAUUSD_historical.csv...")
+            df = pd.read_csv("gap/XAUUSD_historical.csv", sep=';')
+            df['Date'] = pd.to_datetime(df['Date'], format='%Y.%m.%d %H:%M')
+        elif mode == "live":
+            # Placeholder for live data integration (to be added in Phase 2)
+            logging.info("Fetching live XAUUSD data... [NOT IMPLEMENTED YET]")
+            return {"error": "Live mode is not yet implemented."}
+        else:
+            return {"error": "Invalid mode. Use 'historical' or 'live'."}
+
         logging.info(f"Loaded {len(df)} rows of data")
 
         milestone_log = simulate_milestones(df)
@@ -32,6 +41,7 @@ def run_pipeline() -> dict:
         payments = generate_payment_batch(contracts)
         summary = summarize_project(milestone_log, contracts)
 
+        # Tag macroeconomic context for display
         gap_contexts = [
             "None",
             "Pre-Crisis Boom + Commodities Rise",
@@ -52,7 +62,8 @@ def run_pipeline() -> dict:
 
     except Exception as e:
         logging.exception(f"Pipeline failed due to: {e}")
-        return {}
+        return {"error": str(e)}
+
 
 if __name__ == "__main__":
     run_pipeline()
